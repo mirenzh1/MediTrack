@@ -105,24 +105,10 @@ export class MedicationService {
   }
 
   static async getAllInventory(): Promise<InventoryItem[]> {
-    const { data, error } = await supabase
-      .from('inventory_items')
-      .select('*')
-      .order('expiration_date')
-
-    if (error) {
-      console.error('Error fetching all inventory:', error)
-      throw new Error('Failed to fetch inventory')
-    }
-
-    return data?.map(item => ({
-      id: item.id,
-      medicationId: item.medication_id,
-      lotNumber: item.lot_number,
-      expirationDate: new Date(item.expiration_date),
-      quantity: item.quantity,
-      isExpired: new Date(item.expiration_date) < new Date()
-    })) || []
+    // TODO: inventory_items table doesn't exist yet
+    // Return empty array for now
+    console.warn('inventory_items table not yet implemented')
+    return []
   }
 
   // Dispensing Records
@@ -130,7 +116,7 @@ export class MedicationService {
     const { data, error } = await supabase
       .from('dispensing_logs')
       .select('*')
-      .order('date', { ascending: false })
+      .order('log_date', { ascending: false })
 
     if (error) {
       console.error('Error fetching dispensing records:', error)
@@ -139,15 +125,15 @@ export class MedicationService {
 
     return data?.map(record => ({
       id: record.id,
-      medicationId: record.medication || '',
-      medicationName: record.medication,
-      patientInitials: record.patient_id.split('-')[0] + '.' + record.patient_id.split('-')[1].slice(0,1) + '.',
-      quantity: parseInt(record.amount?.replace(/\D/g, '') || '1'),
-      lotNumber: record.lot_exp?.split(',')[0] || '',
-      dispensedBy: record.physician,
-      dispensedAt: new Date(record.date),
-      indication: record.dose || '',
-      notes: `Student: ${record.student}, Site: ${record.site}`
+      medicationId: record.medication_name || '',
+      medicationName: record.medication_name,
+      patientInitials: record.patient_id?.split('-')[0] + '.' + (record.patient_id?.split('-')[1]?.slice(0,1) || '') + '.',
+      quantity: parseInt(record.amount_dispensed?.replace(/\D/g, '') || '1'),
+      lotNumber: record.lot_number || '',
+      dispensedBy: record.physician_name || '',
+      dispensedAt: new Date(record.log_date),
+      indication: record.dose_instructions || '',
+      notes: `Student: ${record.student_name || 'N/A'}`
     })) || []
   }
 
@@ -155,15 +141,15 @@ export class MedicationService {
     const { data, error } = await supabase
       .from('dispensing_logs')
       .insert({
-        date: record.dispensedAt.toISOString().split('T')[0],
+        log_date: record.dispensedAt.toISOString().split('T')[0],
         patient_id: `2025-${Math.floor(Math.random() * 1000)}`,
-        medication: record.medicationName,
-        dose: record.indication,
-        lot_exp: record.lotNumber,
-        amount: `${record.quantity} tabs`,
-        physician: record.dispensedBy,
-        student: 'New Entry',
-        site: 'Clinic'
+        medication_name: record.medicationName,
+        dose_instructions: record.indication,
+        lot_number: record.lotNumber,
+        expiration_date: '',
+        amount_dispensed: `${record.quantity} tabs`,
+        physician_name: record.dispensedBy,
+        student_name: 'New Entry'
       })
       .select()
       .single()
@@ -176,14 +162,14 @@ export class MedicationService {
     return {
       id: data.id,
       medicationId: record.medicationId,
-      medicationName: data.medication,
-      patientInitials: data.patient_id.split('-')[0] + '.' + data.patient_id.split('-')[1].slice(0,1) + '.',
+      medicationName: data.medication_name,
+      patientInitials: data.patient_id?.split('-')[0] + '.' + (data.patient_id?.split('-')[1]?.slice(0,1) || '') + '.',
       quantity: record.quantity,
-      lotNumber: record.lotNumber,
-      dispensedBy: data.physician,
-      dispensedAt: new Date(data.date),
-      indication: data.dose,
-      notes: `Student: ${data.student}, Site: ${data.site}`
+      lotNumber: record.lot_number || '',
+      dispensedBy: data.physician_name,
+      dispensedAt: new Date(data.log_date),
+      indication: data.dose_instructions,
+      notes: `Student: ${data.student_name || 'N/A'}`
     }
   }
 
