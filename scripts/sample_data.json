@@ -1,0 +1,982 @@
+{
+  "clinic_sites": [
+    {
+      "site_name": "Pacific",
+      "clinic_date": "2023-06-11"
+    },
+    {
+      "site_name": "James Town",
+      "clinic_date": "2023-06-10"
+    }
+  ],
+  "medications": [
+    {
+      "name": "APAP 500 mg",
+      "strength": null,
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Acetaminophen",
+      "strength": "500mg",
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Albuterol",
+      "strength": "90mcg",
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Albuterol 90 mcg",
+      "strength": null,
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Amlodipine",
+      "strength": "10mg",
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Amlodipine",
+      "strength": "5mg",
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Amlodipine 5 mg",
+      "strength": null,
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Amox 500 mg",
+      "strength": null,
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Amoxicillin",
+      "strength": "500mg",
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Amoxicillin 500 mg",
+      "strength": null,
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Artificial Tears",
+      "strength": null,
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Aspirin",
+      "strength": "81mg",
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Aspirin 81 mg",
+      "strength": null,
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Diphenhydramine",
+      "strength": null,
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Doxy Hyclate",
+      "strength": "100mg",
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Famotidine",
+      "strength": "20mg",
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Famotidine 20 mg",
+      "strength": null,
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Fluoxetine 20 mg",
+      "strength": null,
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Ibuprofen",
+      "strength": "200mg",
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Ibuprofen 200 mg",
+      "strength": null,
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Ibuprofen 400 mg",
+      "strength": null,
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Lisinopril",
+      "strength": "10",
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Lisinopril 10 mg",
+      "strength": null,
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Metformin",
+      "strength": "500mg",
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Multivitamin",
+      "strength": null,
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Naproxen",
+      "strength": "375mg",
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Naproxen 375 mg",
+      "strength": null,
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Omeprazole",
+      "strength": "20mg",
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Omeprazole 20 mg",
+      "strength": null,
+      "dosage_form": "tablet"
+    },
+    {
+      "name": "Saline Nasal Spray",
+      "strength": null,
+      "dosage_form": "tablet"
+    }
+  ],
+  "users": [
+    {
+      "email": "adam@clinic.org",
+      "role": "physician",
+      "first_name": "Adam",
+      "last_name": ""
+    },
+    {
+      "email": "alex@clinic.org",
+      "role": "physician",
+      "first_name": "Alex",
+      "last_name": ""
+    },
+    {
+      "email": "buckley@clinic.org",
+      "role": "physician",
+      "first_name": "Buckley",
+      "last_name": ""
+    },
+    {
+      "email": "drb@clinic.org",
+      "role": "physician",
+      "first_name": "Dr.",
+      "last_name": "B"
+    },
+    {
+      "email": "jennifer@clinic.org",
+      "role": "physician",
+      "first_name": "Jennifer",
+      "last_name": ""
+    },
+    {
+      "email": "jenniferc@clinic.org",
+      "role": "physician",
+      "first_name": "Jennifer",
+      "last_name": "C"
+    },
+    {
+      "email": "jennifers@clinic.org",
+      "role": "physician",
+      "first_name": "Jennifer",
+      "last_name": "S"
+    },
+    {
+      "email": "jose@clinic.org",
+      "role": "physician",
+      "first_name": "Jose",
+      "last_name": ""
+    },
+    {
+      "email": "karenc@clinic.org",
+      "role": "physician",
+      "first_name": "Karen",
+      "last_name": "C"
+    },
+    {
+      "email": "kushala@clinic.org",
+      "role": "physician",
+      "first_name": "Kushala",
+      "last_name": ""
+    },
+    {
+      "email": "kushalah@clinic.org",
+      "role": "physician",
+      "first_name": "Kushala",
+      "last_name": "H"
+    },
+    {
+      "email": "lbourne@clinic.org",
+      "role": "physician",
+      "first_name": "L",
+      "last_name": "Bourne"
+    },
+    {
+      "email": "laurab@clinic.org",
+      "role": "physician",
+      "first_name": "Laura",
+      "last_name": "B."
+    },
+    {
+      "email": "manuel@clinic.org",
+      "role": "physician",
+      "first_name": "Manuel",
+      "last_name": ""
+    },
+    {
+      "email": "pandya@clinic.org",
+      "role": "physician",
+      "first_name": "Pandya",
+      "last_name": ""
+    },
+    {
+      "email": "ramirez@clinic.org",
+      "role": "physician",
+      "first_name": "Ramirez",
+      "last_name": ""
+    },
+    {
+      "email": "romir@clinic.org",
+      "role": "physician",
+      "first_name": "Romir",
+      "last_name": ""
+    },
+    {
+      "email": "veronicac@clinic.org",
+      "role": "physician",
+      "first_name": "Veronica",
+      "last_name": "C."
+    },
+    {
+      "email": "alexis@emory.edu",
+      "role": "student",
+      "first_name": "Alexis",
+      "last_name": ""
+    },
+    {
+      "email": "allison@emory.edu",
+      "role": "student",
+      "first_name": "Allison",
+      "last_name": ""
+    },
+    {
+      "email": "ann@emory.edu",
+      "role": "student",
+      "first_name": "Ann",
+      "last_name": ""
+    },
+    {
+      "email": "ann.s@emory.edu",
+      "role": "student",
+      "first_name": "Ann",
+      "last_name": "S"
+    },
+    {
+      "email": "arrocho@emory.edu",
+      "role": "student",
+      "first_name": "Arrocho",
+      "last_name": ""
+    },
+    {
+      "email": "brandin@emory.edu",
+      "role": "student",
+      "first_name": "Brandin",
+      "last_name": ""
+    },
+    {
+      "email": "brian@emory.edu",
+      "role": "student",
+      "first_name": "Brian",
+      "last_name": ""
+    },
+    {
+      "email": "claire@emory.edu",
+      "role": "student",
+      "first_name": "Claire",
+      "last_name": ""
+    },
+    {
+      "email": "colletti@emory.edu",
+      "role": "student",
+      "first_name": "Colletti",
+      "last_name": ""
+    },
+    {
+      "email": "colton@emory.edu",
+      "role": "student",
+      "first_name": "Colton",
+      "last_name": ""
+    },
+    {
+      "email": "daniel@emory.edu",
+      "role": "student",
+      "first_name": "Daniel",
+      "last_name": ""
+    },
+    {
+      "email": "emily@emory.edu",
+      "role": "student",
+      "first_name": "Emily",
+      "last_name": ""
+    },
+    {
+      "email": "emily.r@emory.edu",
+      "role": "student",
+      "first_name": "Emily",
+      "last_name": "R"
+    },
+    {
+      "email": "emma@emory.edu",
+      "role": "student",
+      "first_name": "Emma",
+      "last_name": ""
+    },
+    {
+      "email": "g.a.g@emory.edu",
+      "role": "student",
+      "first_name": "G.A.G",
+      "last_name": ""
+    },
+    {
+      "email": "gina@emory.edu",
+      "role": "student",
+      "first_name": "Gina",
+      "last_name": ""
+    },
+    {
+      "email": "ivone@emory.edu",
+      "role": "student",
+      "first_name": "Ivone",
+      "last_name": ""
+    },
+    {
+      "email": "kailyn@emory.edu",
+      "role": "student",
+      "first_name": "Kailyn",
+      "last_name": ""
+    },
+    {
+      "email": "m..kanliu@emory.edu",
+      "role": "student",
+      "first_name": "M.",
+      "last_name": "Kanliu"
+    },
+    {
+      "email": "marie@emory.edu",
+      "role": "student",
+      "first_name": "Marie",
+      "last_name": ""
+    },
+    {
+      "email": "melissa@emory.edu",
+      "role": "student",
+      "first_name": "Melissa",
+      "last_name": ""
+    },
+    {
+      "email": "michaela@emory.edu",
+      "role": "student",
+      "first_name": "Michaela",
+      "last_name": ""
+    },
+    {
+      "email": "morace@emory.edu",
+      "role": "student",
+      "first_name": "Morace",
+      "last_name": ""
+    },
+    {
+      "email": "simeon.r@emory.edu",
+      "role": "student",
+      "first_name": "Simeon",
+      "last_name": "R"
+    },
+    {
+      "email": "simone@emory.edu",
+      "role": "student",
+      "first_name": "Simone",
+      "last_name": ""
+    },
+    {
+      "email": "taylor@emory.edu",
+      "role": "student",
+      "first_name": "Taylor",
+      "last_name": ""
+    }
+  ],
+  "dispensing_logs": [
+    {
+      "date": "2023-06-11",
+      "patient_id": "2035-39",
+      "medication": "Aspirin 81mg",
+      "dose": "1 tab",
+      "lot_exp": "QA01467, 7/25",
+      "amount": "90 tabs",
+      "physician": "Dr. B",
+      "student": "G.A.G",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-11",
+      "patient_id": "2635-324",
+      "medication": "Aspirin 81 mg",
+      "dose": "QD",
+      "lot_exp": "11454, 4/26",
+      "amount": "90 tabs",
+      "physician": "Dr. B",
+      "student": "G.A.G",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-11",
+      "patient_id": "2035-311",
+      "medication": "Ibuprofen 200 mg",
+      "dose": "PRN",
+      "lot_exp": "REE2003, 2/27",
+      "amount": "as tabs",
+      "physician": "Alex",
+      "student": "Michaela",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-11",
+      "patient_id": "2035-304",
+      "medication": "Amlodipine 5 mg",
+      "dose": "1 tab",
+      "lot_exp": "EW0636, 2/25",
+      "amount": "90 tabs",
+      "physician": "L Bourne",
+      "student": "Simeon R",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-11",
+      "patient_id": "2035-340",
+      "medication": "Metformin 500mg",
+      "dose": "BID",
+      "lot_exp": "QA140406, 7/25",
+      "amount": "200 tabs",
+      "physician": "L Bourne",
+      "student": "Simeon R",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-11",
+      "patient_id": "2035-340",
+      "medication": "Acetaminophen 500mg",
+      "dose": "1 tab",
+      "lot_exp": "X1682, 1/26",
+      "amount": "90 tabs",
+      "physician": "Ramirez",
+      "student": "Taylor",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-11",
+      "patient_id": "2035-2616",
+      "medication": "Lisinopril 10 mg",
+      "dose": "1 tab",
+      "lot_exp": "REE1043, 1/25",
+      "amount": "30 tabs",
+      "physician": "Karen C",
+      "student": "Ann S",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-11",
+      "patient_id": "2035-246",
+      "medication": "Lisinopril 10 mg",
+      "dose": "1 tab",
+      "lot_exp": "REE1043, 1/25",
+      "amount": "90 tabs",
+      "physician": "Karen C",
+      "student": "Ann S",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-11",
+      "patient_id": "2035-246",
+      "medication": "Lisinopril 10 mg",
+      "dose": "1 tab",
+      "lot_exp": "QA01453, 6/25",
+      "amount": "40 tabs",
+      "physician": "Karen C",
+      "student": "Ann S",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-11",
+      "patient_id": "2035-246",
+      "medication": "Artificial Tears",
+      "dose": "PRN",
+      "lot_exp": "11AFX, 6/24",
+      "amount": "10 ml",
+      "physician": "Karen C",
+      "student": "Ann S",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-11",
+      "patient_id": "2035-249",
+      "medication": "Famotidine 20mg",
+      "dose": "1 tab BD",
+      "lot_exp": "AFEA385, 3/24",
+      "amount": "90 tabs",
+      "physician": "Karen C",
+      "student": "Emily R",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-11",
+      "patient_id": "2035-249",
+      "medication": "Multivitamin",
+      "dose": "1 tab",
+      "lot_exp": "SAV04, 2/27",
+      "amount": "100 tabs",
+      "physician": "Alex",
+      "student": "Kailyn",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-11",
+      "patient_id": "2635-243",
+      "medication": "APAP 500 mg",
+      "dose": "2 TABS PRN",
+      "lot_exp": "3AE8082, 4/24",
+      "amount": "24 tabs",
+      "physician": "Laura B.",
+      "student": "Simone",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-11",
+      "patient_id": "2635-244",
+      "medication": "APAP 500 mg",
+      "dose": "PRN",
+      "lot_exp": "3AE8082, 4/24",
+      "amount": "24 tabs",
+      "physician": "Ramirez",
+      "student": "Allison",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-11",
+      "patient_id": "2035-337",
+      "medication": "APAP 500 mg",
+      "dose": "PRN",
+      "lot_exp": "3AE8082, 4/24",
+      "amount": "24 tabs",
+      "physician": "Veronica C.",
+      "student": "Colletti",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-11",
+      "patient_id": "2035-337",
+      "medication": "Ibuprofen 200mg",
+      "dose": "PRN",
+      "lot_exp": "QA0140405, 7/25",
+      "amount": "24 tabs",
+      "physician": "Veronica C.",
+      "student": "Colletti",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-11",
+      "patient_id": "2035-335",
+      "medication": "Lisinopril 10 mg",
+      "dose": "1 tab",
+      "lot_exp": "REE1043, 1/25",
+      "amount": "30 tabs",
+      "physician": "Jennifer",
+      "student": "Taylor",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-11",
+      "patient_id": "2035-335",
+      "medication": "Omeprazole 20 mg",
+      "dose": "1 tab",
+      "lot_exp": "QA115604, 1/26",
+      "amount": "30 tabs",
+      "physician": "Jennifer",
+      "student": "M. Kanliu",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-11",
+      "patient_id": "2035-247",
+      "medication": "Omeprazole 20 mg",
+      "dose": "QD",
+      "lot_exp": "QA115604, 1/26",
+      "amount": "30 tabs",
+      "physician": "Jennifer",
+      "student": "Brian",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-11",
+      "patient_id": "2035-218",
+      "medication": "APAP 500 mg",
+      "dose": "PRN",
+      "lot_exp": "SAV04, 2/27",
+      "amount": "30 tabs",
+      "physician": "Jennifer S",
+      "student": "M. Kanliu",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-11",
+      "patient_id": "2035-218",
+      "medication": "Lisinopril 10 mg",
+      "dose": "1 tab",
+      "lot_exp": "QA115604, 1/26",
+      "amount": "30 tabs",
+      "physician": "Jennifer S",
+      "student": "M. Kanliu",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-11",
+      "patient_id": "2035-271",
+      "medication": "Lisinopril 10 mg",
+      "dose": "PAU",
+      "lot_exp": "11953A, 6/26",
+      "amount": "30 tabs",
+      "physician": "Jennifer S",
+      "student": "M. Kanliu",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-11",
+      "patient_id": "2035-271",
+      "medication": "Naproxen 375 mg",
+      "dose": "PRN",
+      "lot_exp": "11953A, 6/26",
+      "amount": "30 tabs",
+      "physician": "Jennifer S",
+      "student": "Arrocho",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-11",
+      "patient_id": "2035-271",
+      "medication": "Omeprazole 20 mg",
+      "dose": "PRN",
+      "lot_exp": "QA115604, 1/26",
+      "amount": "30 tabs",
+      "physician": "Romir",
+      "student": "Arrocho",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-11",
+      "patient_id": "2035-403",
+      "medication": "Multivitamin",
+      "dose": "1 tab",
+      "lot_exp": "1wG314, 7/25",
+      "amount": "120 tabs",
+      "physician": "",
+      "student": "Emily",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-11",
+      "patient_id": "2035-403",
+      "medication": "Omeprazole 20mg",
+      "dose": "1C BID",
+      "lot_exp": "QA115600, 10/24",
+      "amount": "60 tabs",
+      "physician": "Adam",
+      "student": "Colton",
+      "site": "Pacific"
+    },
+    {
+      "date": "2023-06-10",
+      "patient_id": "2035-62",
+      "medication": "Famotidine 20 mg",
+      "dose": "PRN",
+      "lot_exp": "AFEA418, 4/24",
+      "amount": "60 tabs",
+      "physician": "Jennifer",
+      "student": "Morace",
+      "site": "James Town"
+    },
+    {
+      "date": "2023-06-10",
+      "patient_id": "2035-111",
+      "medication": "Saline Nasal Spray",
+      "dose": "PRN",
+      "lot_exp": "RC150242, 6/24",
+      "amount": "44 mL",
+      "physician": "Buckley",
+      "student": "Alexis",
+      "site": "James Town"
+    },
+    {
+      "date": "2023-06-10",
+      "patient_id": "2035-84",
+      "medication": "Amlodipine 5mg",
+      "dose": "1 tab",
+      "lot_exp": "EFE6224, 6/24",
+      "amount": "90 tabs",
+      "physician": "Manuel",
+      "student": "Brandin",
+      "site": "James Town"
+    },
+    {
+      "date": "2023-06-10",
+      "patient_id": "2035-36",
+      "medication": "Omeprazole 20mg",
+      "dose": "1 tab daily",
+      "lot_exp": "QA11606, 9/24",
+      "amount": "30 tabs",
+      "physician": "Alex",
+      "student": "Michaela",
+      "site": "James Town"
+    },
+    {
+      "date": "2023-06-10",
+      "patient_id": "2035-53",
+      "medication": "Amox 500 mg",
+      "dose": "1 tab BID",
+      "lot_exp": "AFGA2A06, 9/25",
+      "amount": "16 caps",
+      "physician": "Jennifer",
+      "student": "Alexis",
+      "site": "James Town"
+    },
+    {
+      "date": "2023-06-10",
+      "patient_id": "2035-73",
+      "medication": "Lisinopril 10",
+      "dose": "1 tab",
+      "lot_exp": "G3OH52, 6/25",
+      "amount": "30 tabs",
+      "physician": "Jennifer",
+      "student": "Melissa",
+      "site": "James Town"
+    },
+    {
+      "date": "2023-06-10",
+      "patient_id": "2035-95",
+      "medication": "Naproxen 375mg",
+      "dose": "PRN",
+      "lot_exp": "11953A, 6/25",
+      "amount": "30 tabs",
+      "physician": "Jose",
+      "student": "Taylor",
+      "site": "James Town"
+    },
+    {
+      "date": "2023-06-10",
+      "patient_id": "2635-125",
+      "medication": "Omeprazole 20 mg",
+      "dose": "2C BID",
+      "lot_exp": "CA11S600, 9/24",
+      "amount": "120 caps",
+      "physician": "Pandya",
+      "student": "Colton",
+      "site": "James Town"
+    },
+    {
+      "date": "2023-06-10",
+      "patient_id": "2635-157",
+      "medication": "Fluoxetine 20 mg",
+      "dose": "1 tab",
+      "lot_exp": "AFEA2A06, 9/25",
+      "amount": "60 tabs",
+      "physician": "Pandya",
+      "student": "Colton",
+      "site": "James Town"
+    },
+    {
+      "date": "2023-06-10",
+      "patient_id": "2035-136",
+      "medication": "Doxy Hyclate 100mg",
+      "dose": "1 tab",
+      "lot_exp": "3417545, 7/24",
+      "amount": "14 tabs",
+      "physician": "Pandya",
+      "student": "Claire",
+      "site": "James Town"
+    },
+    {
+      "date": "2023-06-10",
+      "patient_id": "2035-177",
+      "medication": "Ibuprofen 400 mg",
+      "dose": "ST PRN",
+      "lot_exp": "LFA102A, 8/25",
+      "amount": "48 tabs",
+      "physician": "Kushala H",
+      "student": "Michaela",
+      "site": "James Town"
+    },
+    {
+      "date": "2023-06-10",
+      "patient_id": "2635-94",
+      "medication": "APAP 500 mg",
+      "dose": "1 tab",
+      "lot_exp": "3AE3085, 4/24",
+      "amount": "24 tablets",
+      "physician": "Kushala",
+      "student": "Michaela",
+      "site": "James Town"
+    },
+    {
+      "date": "2023-06-10",
+      "patient_id": "2035-136",
+      "medication": "Amlodipine 10mg",
+      "dose": "1 tab",
+      "lot_exp": "QA61441A, 11/25",
+      "amount": "60 tabs",
+      "physician": "Pandya",
+      "student": "Emma",
+      "site": "James Town"
+    },
+    {
+      "date": "2023-06-10",
+      "patient_id": "2035-89",
+      "medication": "Albuterol 90mcg",
+      "dose": "2 PUFF PRN",
+      "lot_exp": "A10A1601, 10/25",
+      "amount": "15 g inh",
+      "physician": "Pandya",
+      "student": "Emma",
+      "site": "James Town"
+    },
+    {
+      "date": "2023-06-10",
+      "patient_id": "2035-125",
+      "medication": "Naproxen 375mg",
+      "dose": "ST BID",
+      "lot_exp": "11953A, 6/25",
+      "amount": "7 tabs",
+      "physician": "Dr. B",
+      "student": "Gina",
+      "site": "James Town"
+    },
+    {
+      "date": "2023-06-10",
+      "patient_id": "2035-139",
+      "medication": "Diphenhydramine",
+      "dose": "1 tab",
+      "lot_exp": "A136020L, 9/25",
+      "amount": "30 caps",
+      "physician": "Dr. B",
+      "student": "Gina",
+      "site": "James Town"
+    },
+    {
+      "date": "2023-06-10",
+      "patient_id": "2635-154",
+      "medication": "Amoxicillin 500mg",
+      "dose": "1 tab",
+      "lot_exp": "QA04366, 7/25",
+      "amount": "30 caps",
+      "physician": "Adam",
+      "student": "Ann",
+      "site": "James Town"
+    },
+    {
+      "date": "2023-06-10",
+      "patient_id": "2635-142",
+      "medication": "Amlodipine 5mg",
+      "dose": "1 tab",
+      "lot_exp": "EW0646, 2/25",
+      "amount": "90 tabs",
+      "physician": "Jennifer C",
+      "student": "Ivone",
+      "site": "James Town"
+    },
+    {
+      "date": "2023-06-10",
+      "patient_id": "2635-102",
+      "medication": "Naproxen 375 mg",
+      "dose": "PRN",
+      "lot_exp": "11953A, 6/25",
+      "amount": "20 tabs",
+      "physician": "Manuel",
+      "student": "Marie",
+      "site": "James Town"
+    },
+    {
+      "date": "2023-06-10",
+      "patient_id": "2635-93",
+      "medication": "Artificial Tears",
+      "dose": "PRN",
+      "lot_exp": "11F3S, 6/25",
+      "amount": "10 mL",
+      "physician": "Laura B.",
+      "student": "Melissa",
+      "site": "James Town"
+    },
+    {
+      "date": "2023-06-10",
+      "patient_id": "2035-132",
+      "medication": "Albuterol 90 mcg",
+      "dose": "PRN",
+      "lot_exp": "EW6341, 1/25",
+      "amount": "8.5g",
+      "physician": "Laura B.",
+      "student": "Melissa",
+      "site": "James Town"
+    },
+    {
+      "date": "2023-06-10",
+      "patient_id": "2035-132",
+      "medication": "Amlodipine 5mg",
+      "dose": "1 tab",
+      "lot_exp": "X1681113, 12/25",
+      "amount": "90 tabs",
+      "physician": "Pandya",
+      "student": "Colton",
+      "site": "James Town"
+    },
+    {
+      "date": "2023-06-10",
+      "patient_id": "2035-140",
+      "medication": "Naproxen 375 mg",
+      "dose": "ST BID",
+      "lot_exp": "11953A, 6/25",
+      "amount": "30 tabs",
+      "physician": "Jennifer",
+      "student": "Daniel",
+      "site": "James Town"
+    },
+    {
+      "date": "2023-06-10",
+      "patient_id": "2635-177",
+      "medication": "Amoxicillin 500 mg",
+      "dose": "1 tab",
+      "lot_exp": "SE113644, 4/26",
+      "amount": "30 tabs",
+      "physician": "Pandya",
+      "student": "Colton",
+      "site": "James Town"
+    }
+  ]
+}

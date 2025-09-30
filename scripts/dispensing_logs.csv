@@ -1,0 +1,51 @@
+date,patient_id,medication,dose,lot_exp,amount,physician,student,site
+2023-06-11,2035-39,Aspirin 81mg,1 tab,"QA01467, 7/25",90 tabs,Dr. B,G.A.G,Pacific
+2023-06-11,2635-324,Aspirin 81 mg,QD,"11454, 4/26",90 tabs,Dr. B,G.A.G,Pacific
+2023-06-11,2035-311,Ibuprofen 200 mg,PRN,"REE2003, 2/27",as tabs,Alex,Michaela,Pacific
+2023-06-11,2035-304,Amlodipine 5 mg,1 tab,"EW0636, 2/25",90 tabs,L Bourne,Simeon R,Pacific
+2023-06-11,2035-340,Metformin 500mg,BID,"QA140406, 7/25",200 tabs,L Bourne,Simeon R,Pacific
+2023-06-11,2035-340,Acetaminophen 500mg,1 tab,"X1682, 1/26",90 tabs,Ramirez,Taylor,Pacific
+2023-06-11,2035-2616,Lisinopril 10 mg,1 tab,"REE1043, 1/25",30 tabs,Karen C,Ann S,Pacific
+2023-06-11,2035-246,Lisinopril 10 mg,1 tab,"REE1043, 1/25",90 tabs,Karen C,Ann S,Pacific
+2023-06-11,2035-246,Lisinopril 10 mg,1 tab,"QA01453, 6/25",40 tabs,Karen C,Ann S,Pacific
+2023-06-11,2035-246,Artificial Tears,PRN,"11AFX, 6/24",10 ml,Karen C,Ann S,Pacific
+2023-06-11,2035-249,Famotidine 20mg,1 tab BD,"AFEA385, 3/24",90 tabs,Karen C,Emily R,Pacific
+2023-06-11,2035-249,Multivitamin,1 tab,"SAV04, 2/27",100 tabs,Alex,Kailyn,Pacific
+2023-06-11,2635-243,APAP 500 mg,2 TABS PRN,"3AE8082, 4/24",24 tabs,Laura B.,Simone,Pacific
+2023-06-11,2635-244,APAP 500 mg,PRN,"3AE8082, 4/24",24 tabs,Ramirez,Allison,Pacific
+2023-06-11,2035-337,APAP 500 mg,PRN,"3AE8082, 4/24",24 tabs,Veronica C.,Colletti,Pacific
+2023-06-11,2035-337,Ibuprofen 200mg,PRN,"QA0140405, 7/25",24 tabs,Veronica C.,Colletti,Pacific
+2023-06-11,2035-335,Lisinopril 10 mg,1 tab,"REE1043, 1/25",30 tabs,Jennifer,Taylor,Pacific
+2023-06-11,2035-335,Omeprazole 20 mg,1 tab,"QA115604, 1/26",30 tabs,Jennifer,M. Kanliu,Pacific
+2023-06-11,2035-247,Omeprazole 20 mg,QD,"QA115604, 1/26",30 tabs,Jennifer,Brian,Pacific
+2023-06-11,2035-218,APAP 500 mg,PRN,"SAV04, 2/27",30 tabs,Jennifer S,M. Kanliu,Pacific
+2023-06-11,2035-218,Lisinopril 10 mg,1 tab,"QA115604, 1/26",30 tabs,Jennifer S,M. Kanliu,Pacific
+2023-06-11,2035-271,Lisinopril 10 mg,PAU,"11953A, 6/26",30 tabs,Jennifer S,M. Kanliu,Pacific
+2023-06-11,2035-271,Naproxen 375 mg,PRN,"11953A, 6/26",30 tabs,Jennifer S,Arrocho,Pacific
+2023-06-11,2035-271,Omeprazole 20 mg,PRN,"QA115604, 1/26",30 tabs,Romir,Arrocho,Pacific
+2023-06-11,2035-403,Multivitamin,1 tab,"1wG314, 7/25",120 tabs,,Emily,Pacific
+2023-06-11,2035-403,Omeprazole 20mg,1C BID,"QA115600, 10/24",60 tabs,Adam,Colton,Pacific
+2023-06-10,2035-62,Famotidine 20 mg,PRN,"AFEA418, 4/24",60 tabs,Jennifer,Morace,James Town
+2023-06-10,2035-111,Saline Nasal Spray,PRN,"RC150242, 6/24",44 mL,Buckley,Alexis,James Town
+2023-06-10,2035-84,Amlodipine 5mg,1 tab,"EFE6224, 6/24",90 tabs,Manuel,Brandin,James Town
+2023-06-10,2035-36,Omeprazole 20mg,1 tab daily,"QA11606, 9/24",30 tabs,Alex,Michaela,James Town
+2023-06-10,2035-53,Amox 500 mg,1 tab BID,"AFGA2A06, 9/25",16 caps,Jennifer,Alexis,James Town
+2023-06-10,2035-73,Lisinopril 10,1 tab,"G3OH52, 6/25",30 tabs,Jennifer,Melissa,James Town
+2023-06-10,2035-95,Naproxen 375mg,PRN,"11953A, 6/25",30 tabs,Jose,Taylor,James Town
+2023-06-10,2635-125,Omeprazole 20 mg,2C BID,"CA11S600, 9/24",120 caps,Pandya,Colton,James Town
+2023-06-10,2635-157,Fluoxetine 20 mg,1 tab,"AFEA2A06, 9/25",60 tabs,Pandya,Colton,James Town
+2023-06-10,2035-136,Doxy Hyclate 100mg,1 tab,"3417545, 7/24",14 tabs,Pandya,Claire,James Town
+2023-06-10,2035-177,Ibuprofen 400 mg,ST PRN,"LFA102A, 8/25",48 tabs,Kushala H,Michaela,James Town
+2023-06-10,2635-94,APAP 500 mg,1 tab,"3AE3085, 4/24",24 tablets,Kushala,Michaela,James Town
+2023-06-10,2035-136,Amlodipine 10mg,1 tab,"QA61441A, 11/25",60 tabs,Pandya,Emma,James Town
+2023-06-10,2035-89,Albuterol 90mcg,2 PUFF PRN,"A10A1601, 10/25",15 g inh,Pandya,Emma,James Town
+2023-06-10,2035-125,Naproxen 375mg,ST BID,"11953A, 6/25",7 tabs,Dr. B,Gina,James Town
+2023-06-10,2035-139,Diphenhydramine,1 tab,"A136020L, 9/25",30 caps,Dr. B,Gina,James Town
+2023-06-10,2635-154,Amoxicillin 500mg,1 tab,"QA04366, 7/25",30 caps,Adam,Ann,James Town
+2023-06-10,2635-142,Amlodipine 5mg,1 tab,"EW0646, 2/25",90 tabs,Jennifer C,Ivone,James Town
+2023-06-10,2635-102,Naproxen 375 mg,PRN,"11953A, 6/25",20 tabs,Manuel,Marie,James Town
+2023-06-10,2635-93,Artificial Tears,PRN,"11F3S, 6/25",10 mL,Laura B.,Melissa,James Town
+2023-06-10,2035-132,Albuterol 90 mcg,PRN,"EW6341, 1/25",8.5g,Laura B.,Melissa,James Town
+2023-06-10,2035-132,Amlodipine 5mg,1 tab,"X1681113, 12/25",90 tabs,Pandya,Colton,James Town
+2023-06-10,2035-140,Naproxen 375 mg,ST BID,"11953A, 6/25",30 tabs,Jennifer,Daniel,James Town
+2023-06-10,2635-177,Amoxicillin 500 mg,1 tab,"SE113644, 4/26",30 tabs,Pandya,Colton,James Town

@@ -1,0 +1,267 @@
+import { useState, useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Badge } from './ui/badge';
+import { Input } from './ui/input';
+import { Button } from './ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { Search, Download, Calendar, Package, User } from 'lucide-react';
+import { DispensingRecord } from '../types/medication';
+
+interface DispensingLogProps {
+  records: DispensingRecord[];
+}
+
+export function DispensingLog({ records }: DispensingLogProps) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [dateFilter, setDateFilter] = useState<string>('all');
+
+  const dateFilterOptions = [
+    { value: 'all', label: 'All Time' },
+    { value: 'today', label: 'Today' },
+    { value: 'week', label: 'This Week' },
+    { value: 'month', label: 'This Month' }
+  ];
+
+  const filteredRecords = useMemo(() => {
+    let filtered = records;
+
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter(record =>
+        record.medicationName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        record.patientInitials.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        record.dispensedBy.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        record.indication.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Filter by date
+    if (dateFilter !== 'all') {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      filtered = filtered.filter(record => {
+        const recordDate = new Date(record.dispensedAt);
+        
+        switch (dateFilter) {
+          case 'today':
+            return recordDate >= today;
+          case 'week':
+            const weekAgo = new Date(today);
+            weekAgo.setDate(today.getDate() - 7);
+            return recordDate >= weekAgo;
+          case 'month':
+            const monthAgo = new Date(today);
+            monthAgo.setMonth(today.getMonth() - 1);
+            return recordDate >= monthAgo;
+          default:
+            return true;
+        }
+      });
+    }
+
+    return filtered.sort((a, b) => new Date(b.dispensedAt).getTime() - new Date(a.dispensedAt).getTime());
+  }, [records, searchTerm, dateFilter]);
+
+  const totalDispensed = filteredRecords.reduce((sum, record) => sum + record.quantity, 0);
+  const uniquePatients = new Set(filteredRecords.map(record => record.patientInitials)).size;
+  const uniqueMedications = new Set(filteredRecords.map(record => record.medicationId)).size;
+
+  const exportToCSV = () => {
+    const headers = [
+      'Date/Time',
+      'Medication',
+      'Patient Initials',
+      'Quantity',
+      'Lot Number',
+      'Dispensed By',
+      'Indication',
+      'Notes'
+    ];
+
+    const csvData = filteredRecords.map(record => [
+      record.dispensedAt.toLocaleString(),
+      record.medicationName,
+      record.patientInitials,
+      record.quantity.toString(),
+      record.lotNumber,
+      record.dispensedBy,
+      record.indication,
+      record.notes || ''
+    ]);
+
+    const csvContent = [headers, ...csvData]
+      .map(row => row.map(field => `"${field}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `dispensing-log-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold">Dispensing Log</h1>
+        <Button onClick={exportToCSV} variant="outline">
+          <Download className="size-4 mr-2" />
+          Export CSV
+        </Button>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Package className="size-8 text-blue-600" />
+              <div>
+                <p className="text-2xl font-bold">{totalDispensed}</p>
+                <p className="text-sm text-muted-foreground">Units Dispensed</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <User className="size-8 text-green-600" />
+              <div>
+                <p className="text-2xl font-bold">{uniquePatients}</p>
+                <p className="text-sm text-muted-foreground">Patients Served</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Calendar className="size-8 text-purple-600" />
+              <div>
+                <p className="text-2xl font-bold">{uniqueMedications}</p>
+                <p className="text-sm text-muted-foreground">Medications Used</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <div className="flex gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by medication, patient, provider, or indication..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Select value={dateFilter} onValueChange={setDateFilter}>
+          <SelectTrigger className="w-[150px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {dateFilterOptions.map(option => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Results count */}
+      <p className="text-sm text-muted-foreground">
+        Showing {filteredRecords.length} of {records.length} dispensing records
+      </p>
+
+      {/* Dispensing Records Table */}
+      <Card>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date/Time</TableHead>
+                  <TableHead>Medication</TableHead>
+                  <TableHead>Patient</TableHead>
+                  <TableHead>Qty</TableHead>
+                  <TableHead>Lot #</TableHead>
+                  <TableHead>Dispensed By</TableHead>
+                  <TableHead>Indication</TableHead>
+                  <TableHead>Notes</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredRecords.map(record => (
+                  <TableRow key={record.id}>
+                    <TableCell>
+                      <div className="text-sm">
+                        <p>{record.dispensedAt.toLocaleDateString()}</p>
+                        <p className="text-muted-foreground">
+                          {record.dispensedAt.toLocaleTimeString([], { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        <p className="font-medium">{record.medicationName}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs">
+                        {record.patientInitials}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-medium">{record.quantity}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm font-mono">{record.lotNumber}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm">{record.dispensedBy}</span>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary" className="text-xs">
+                        {record.indication}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="max-w-[150px]">
+                      {record.notes && (
+                        <p className="text-sm text-muted-foreground truncate" title={record.notes}>
+                          {record.notes}
+                        </p>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          
+          {filteredRecords.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              <Package className="size-12 mx-auto mb-2 opacity-50" />
+              <p>No dispensing records found</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
