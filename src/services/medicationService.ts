@@ -8,6 +8,7 @@ export class MedicationService {
     const { data, error } = await supabase
       .from('medications')
       .select('*')
+      .eq('is_active', true)
       .order('name')
 
     if (error) {
@@ -22,11 +23,11 @@ export class MedicationService {
       strength: med.strength || '',
       dosageForm: med.dosage_form || 'tablet',
       category: 'General', // Default category
-      currentStock: Math.floor(Math.random() * 100) + 10, // Random stock for demo
+      currentStock: med.current_stock || 0, // Use actual stock from database
       minStock: 20,
       maxStock: 100,
-      isAvailable: true,
-      lastUpdated: new Date(),
+      isAvailable: med.is_active && (med.current_stock || 0) > 0,
+      lastUpdated: new Date(med.created_at || new Date()),
       alternatives: [],
       commonUses: [],
       contraindications: []
