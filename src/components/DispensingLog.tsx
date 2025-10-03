@@ -4,9 +4,11 @@ import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { Search, Download, Calendar, Package, User } from 'lucide-react';
+import { Search, Download, Calendar, Package, User, ChevronDown } from 'lucide-react';
 import { DispensingRecord } from '../types/medication';
+import * as XLSX from 'xlsx';
 
 interface DispensingLogProps {
   records: DispensingRecord[];
@@ -106,15 +108,75 @@ export function DispensingLog({ records }: DispensingLogProps) {
     URL.revokeObjectURL(url);
   };
 
+  const exportToExcel = () => {
+    const headers = [
+      'Date/Time',
+      'Medication',
+      'Patient Initials',
+      'Quantity',
+      'Lot Number',
+      'Dispensed By',
+      'Indication',
+      'Notes'
+    ];
+
+    const excelData = filteredRecords.map(record => ({
+      'Date/Time': record.dispensedAt.toLocaleString(),
+      'Medication': record.medicationName,
+      'Patient Initials': record.patientInitials,
+      'Quantity': record.quantity,
+      'Lot Number': record.lotNumber,
+      'Dispensed By': record.dispensedBy,
+      'Indication': record.indication,
+      'Notes': record.notes || ''
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Dispensing Log');
+
+    // Auto-size columns
+    const maxWidth = excelData.reduce((w, r) => {
+      return Math.max(w, r.Medication.length);
+    }, 10);
+    worksheet['!cols'] = [
+      { wch: 20 }, // Date/Time
+      { wch: maxWidth }, // Medication
+      { wch: 15 }, // Patient Initials
+      { wch: 10 }, // Quantity
+      { wch: 15 }, // Lot Number
+      { wch: 20 }, // Dispensed By
+      { wch: 20 }, // Indication
+      { wch: 30 }  // Notes
+    ];
+
+    XLSX.writeFile(workbook, `dispensing-log-${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   return (
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Dispensing Log</h1>
-        <Button onClick={exportToCSV} variant="outline">
-          <Download className="size-4 mr-2" />
-          Export CSV
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">
+              <Download className="size-4 mr-2" />
+              Export
+              <ChevronDown className="size-4 ml-2" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={exportToCSV}>
+              <Download className="size-4 mr-2" />
+              Export as CSV
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={exportToExcel}>
+              <Download className="size-4 mr-2" />
+              Export as Excel
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Summary Cards */}

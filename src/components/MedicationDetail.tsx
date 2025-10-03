@@ -62,19 +62,17 @@ export function MedicationDetail({
       return;
     }
 
-    if (availableLots.length === 0) {
-      console.log('No available lot numbers for dispensing');
-      return;
-    }
-
-    const selectedLot = availableLots[0]; // Use first available lot
+    // Use first available lot or generate temporary lot number
+    const selectedLot = availableLots.length > 0
+      ? availableLots[0].lotNumber
+      : `TEMP-${Date.now().toString().slice(-6)}`;
 
     const record: Omit<DispensingRecord, 'id'> = {
       medicationId: medication.id,
       medicationName: `${medication.name} ${medication.strength}`,
       patientInitials: patientInitials.trim(),
       quantity: quantityNum,
-      lotNumber: selectedLot.lotNumber,
+      lotNumber: selectedLot,
       dispensedBy: currentUser.name,
       dispensedAt: new Date(),
       indication: indication.trim(),
@@ -84,7 +82,7 @@ export function MedicationDetail({
     onDispense(record);
     console.log('Medication dispensed successfully');
     setIsDispenseDialogOpen(false);
-    
+
     // Reset form
     setPatientInitials('');
     setQuantity('');
