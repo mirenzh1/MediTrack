@@ -1,13 +1,18 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Button } from '@/components/ui/Button'
+import { Select } from '@/components/ui/Select'
+
 import {
   listInventoryBySite,
-  receiveLot,
-  setLotQty,            
   listSites,
-  setLotQtyByNumber,    
+  receiveLot,
+  setLotQty,           
+  setLotQtyByNumber,   
 } from '@/data/inventoryApi'
+
+import { dispenseAndLog } from '@/data/dispenseBridge' 
 
 type Row = {
   inventory_id: string
@@ -29,7 +34,6 @@ export default function InventoryPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-
   useEffect(() => {
     ;(async () => {
       const { data, error } = await listSites()
@@ -37,16 +41,16 @@ export default function InventoryPage() {
         setError(error.message)
         return
       }
-      const names = Array.from(
-        new Set((data ?? []).map((d: any) => d.site_name)),
-      ).filter(Boolean)
+      const names = Array.from(new Set((data ?? []).map((d: any) => d.site_name))).filter(Boolean)
       setSites(names)
       if (!site && names.length) setSite(names[0])
     })()
+    
   }, [])
 
   useEffect(() => {
     if (site) void load()
+    
   }, [site])
 
   async function load() {
@@ -58,6 +62,7 @@ export default function InventoryPage() {
     setLoading(false)
   }
 
+  // Receive a new lot
   async function handleReceiveLot(inventory_id: string) {
     const lot = window.prompt('Lot number (e.g., TEST-LOT-2026):')
     if (!lot) return
@@ -82,47 +87,77 @@ export default function InventoryPage() {
     await load()
   }
 
-  async function handleAdjustLotByNumber(inventory_id: string) {
+  async function handleAdjustLotByNumber() {
     const lot = window.prompt('Lot number to adjust (e.g., TEST-LOT-1):')
     if (!lot) return
     const qtyStr = window.prompt('New quantity for this lot (integer):', '40')
     if (!qtyStr) return
     const qty = Number(qtyStr)
-    const { error } = await setLotQtyByNumber(inventory_id, lot, qty)
+    const { error } = await setLotQtyByNumber(lot, qty)
     if (error) alert('Adjust lot error: ' + error.message)
     await load()
+  }
+
+  async function handleDispenseFEFO(row: Row) {
+    const qtyStr = window.prompt(`Dispense how many ${row.medication_name}?`, '1')
+    if (!qtyStr) return
+    const qty = Number(qtyStr)
+    if (!Number.isFinite(qty) || qty <= 0) {
+      alert('Quantity must be a positive number')
+      return
+    }
+    const patientId = window.prompt('Patient ID (YYYY_NNNN):', '2025_0001')
+    if (!patientId) return
+    const studentName = window.prompt('Student name (optional):') || undefined
+    const preceptorName = window.prompt('Preceptor name (optional):') || undefined
+    const dose = window.prompt('Dose instructions (optional):') || undefined
+
+    try {
+      const res = await dispenseAndLog({
+        inventoryId: row.inventory_id,
+        qty,
+        patientId,
+        doseInstructions: dose,
+        studentName,
+        preceptorName,
+        unit: 'tabs',
+        enteredBy: studentName,
+        notes: 'FEFO dispense',
+      })
+      await load()
+
+      if (res.logErrors?.length) {
+        alert(
+          `Dispensed, but some logs failed:\n` +
+          res.logErrors.map(e => `${e.lot_number}: ${e.error}`).join('\n')
+        )
+      } else {
+        alert('Dispensed successfully.')
+      }
+    } catch (e: any) {
+      alert('Dispense error: ' + (e?.message ?? String(e)))
+    }
   }
 
   return (
     <main className="p-6 max-w-5xl mx-auto">
       <h1 className="text-2xl font-semibold mb-4">Inventory</h1>
 
+      {/* Toolbar */}
       <div className="flex items-center gap-3 mb-6">
-        <label className="text-sm">Site</label>
-        <select
-          className="border rounded px-2 py-1"
+        <div className="text-sm">Site</div>
+        <Select
           value={site}
-          onChange={(e) => setSite(e.target.value)}
-        >
-          {sites.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-        <button
-          onClick={() => load()}
-          className="ml-2 rounded bg-black text-white px-3 py-1 text-sm"
-        >
-          Refresh
-        </button>
-        <button
-          onClick={handleAdjustLot}
-          className="ml-2 rounded border px-3 py-1 text-sm"
-          title="Dev-only: paste a LOT_ID to adjust its quantity"
-        >
+          onChange={setSite}
+          options={sites.map(s => ({ value: s, label: s }))}
+        />
+        <Button variant="outline" onClick={() => load()}>Refresh</Button>
+        <Button variant="outline" onClick={handleAdjustLot} title="Dev-only: paste a LOT_ID to adjust its quantity">
           Adjust Lot (by LOT_ID)
-        </button>
+        </Button>
+        <Button variant="outline" onClick={handleAdjustLotByNumber} title="Adjust by lot number (no UUIDs needed)">
+          Adjust lot (by number)
+        </Button>
       </div>
 
       {loading && <p>Loading…</p>}
@@ -163,20 +198,18 @@ export default function InventoryPage() {
                 <td className="py-2 pr-3">{r.soonest_expiration ?? '—'}</td>
                 <td className="py-2 pr-3">{r.is_low_stock ? '⚠️' : ''}</td>
                 <td className="py-2 pr-3">{r.is_out_of_stock ? '❌' : ''}</td>
-                <td className="py-2 pr-3">
-                  <button
-                    onClick={() => handleReceiveLot(r.inventory_id)}
-                    className="rounded bg-blue-600 text-white px-3 py-1 text-xs mr-2"
-                  >
+                <td className="py-2 pr-3 space-x-2">
+                  <Button onClick={() => handleReceiveLot(r.inventory_id)} size="sm">
                     Receive lot
-                  </button>
-                  <button
-                    onClick={() => handleAdjustLotByNumber(r.inventory_id)}
-                    className="rounded border px-3 py-1 text-xs"
-                    title="Adjust by lot number (no UUIDs needed)"
+                  </Button>
+                  <Button
+                    onClick={() => handleDispenseFEFO(r)}
+                    className="bg-green-600 text-white hover:bg-green-700"
+                    size="sm"
+                    title="Dispense using FEFO and log"
                   >
-                    Adjust lot (by number)
-                  </button>
+                    Dispense
+                  </Button>
                 </td>
               </tr>
             ))}
