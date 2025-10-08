@@ -13,6 +13,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './co
 import { Pill, ClipboardList, Settings, User, Menu, LogOut } from 'lucide-react';
 import { Medication, DispensingRecord, InventoryItem, User as UserType } from './types/medication';
 import { MedicationService } from './services/medicationService';
+import { syncService } from './services/syncService';
+import { OfflineStore } from './utils/offlineStore';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -29,20 +31,34 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load initial data from Supabase
+  // Load initial data from Supabase (online) or IndexedDB (offline fallback)
   useEffect(() => {
     const loadData = async () => {
       try {
         setIsLoading(true);
         setError(null);
 
-        // Load all data in parallel
-        const [medicationsData, dispensingData, inventoryData, usersData] = await Promise.all([
-          MedicationService.getAllMedications(),
-          MedicationService.getAllDispensingRecords(),
-          MedicationService.getAllInventory(),
-          MedicationService.getAllUsers()
-        ]);
+        let medicationsData: Medication[] = [];
+        let dispensingData: DispensingRecord[] = [];
+        let inventoryData: InventoryItem[] = [];
+        let usersData: UserType[] = [];
+
+        if (navigator.onLine) {
+          // Online: fetch fresh and prime cache; start realtime
+          [medicationsData, dispensingData, inventoryData, usersData] = await Promise.all([
+            syncService.primeMedicationsCache(),
+            MedicationService.getAllDispensingRecords(),
+            MedicationService.getAllInventory(),
+            MedicationService.getAllUsers()
+          ]);
+          syncService.startMedicationsRealtime();
+        } else {
+          // Offline: use cached meds and empty logs/inventory/users (or keep last)
+          medicationsData = await OfflineStore.getAllMedications();
+          dispensingData = [];
+          inventoryData = [];
+          usersData = [];
+        }
 
         setMedications(medicationsData);
         setDispensingRecords(dispensingData);
@@ -58,13 +74,41 @@ export default function App() {
         setPendingChanges(0);
       } catch (err) {
         console.error('Error loading data:', err);
-        setError('Failed to load data from database. Please try again.');
+        // Offline fallback if network error: try cache
+        try {
+          const cachedMeds = await OfflineStore.getAllMedications();
+          if (cachedMeds.length > 0) {
+            setMedications(cachedMeds);
+            setDispensingRecords([]);
+            setInventory([]);
+            setUsers([]);
+            setError(null);
+          } else {
+            setError('Failed to load data from database. Please try again.');
+          }
+        } catch (e) {
+          setError('Failed to load data from database. Please try again.');
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadData();
+  loadData();
+    // Initialize pending changes count from offline queue
+    (async () => {
+      const count = await OfflineStore.getPendingCount();
+      setPendingChanges(count);
+    })();
+    // Update pending count on connectivity changes
+    const updatePending = async () => setPendingChanges(await OfflineStore.getPendingCount());
+    window.addEventListener('online', updatePending);
+    window.addEventListener('offline', updatePending);
+    return () => {
+      window.removeEventListener('online', updatePending);
+      window.removeEventListener('offline', updatePending);
+      syncService.stopRealtime();
+    }
   }, []);
 
   const handleLogin = (netId: string) => {
@@ -94,42 +138,24 @@ export default function App() {
 
   const handleDispense = async (record: Omit<DispensingRecord, 'id'>) => {
     try {
-      // Create dispensing record in database
-      const newRecord = await MedicationService.createDispensingRecord(record);
-      setDispensingRecords(prev => [newRecord, ...prev]);
-
-      // Update medication stock locally
-      setMedications(prev => prev.map(med => {
-        if (med.id === record.medicationId) {
-          const newStock = Math.max(0, med.currentStock - record.quantity);
-          return {
-            ...med,
-            currentStock: newStock,
-            isAvailable: newStock > 0,
-            lastUpdated: new Date()
-          };
-        }
-        return med;
-      }));
-
-      // Update inventory locally
-      setInventory(prev => prev.map(inv => {
-        if (inv.lotNumber === record.lotNumber) {
-          return {
-            ...inv,
-            quantity: Math.max(0, inv.quantity - record.quantity)
-          };
-        }
-        return inv;
-      }));
-
-      // Update stock in database
-      await MedicationService.updateMedicationStock(
-        record.medicationId,
-        Math.max(0, medications.find(m => m.id === record.medicationId)?.currentStock || 0) - record.quantity
-      );
-
-      setPendingChanges(prev => prev + 1);
+      if (navigator.onLine) {
+        // Online: write-through to server then update local/cache
+        const newRecord = await MedicationService.createDispensingRecord(record);
+  setDispensingRecords((prev: DispensingRecord[]) => [newRecord, ...prev]);
+  const newStock = Math.max(0, (medications.find((m: Medication) => m.id === record.medicationId)?.currentStock || 0) - record.quantity);
+        await MedicationService.updateMedicationStock(record.medicationId, newStock);
+        await OfflineStore.updateMedicationStock(record.medicationId, newStock);
+  setMedications((prev: Medication[]) => prev.map((med: Medication) => med.id === record.medicationId ? { ...med, currentStock: newStock, isAvailable: newStock > 0, lastUpdated: new Date() } : med));
+  // Update inventory locally (best-effort)
+  setInventory(prev => prev.map(inv => inv.lotNumber === record.lotNumber ? { ...inv, quantity: Math.max(0, inv.quantity - record.quantity) } : inv));
+      } else {
+        // Offline: queue and update local stock/cache immediately
+  await syncService.queueOfflineDispense(record);
+  setMedications((prev: Medication[]) => prev.map((med: Medication) => med.id === record.medicationId ? { ...med, currentStock: Math.max(0, med.currentStock - record.quantity), isAvailable: med.currentStock - record.quantity > 0, lastUpdated: new Date() } : med));
+  // Update inventory locally (best-effort)
+  setInventory(prev => prev.map(inv => inv.lotNumber === record.lotNumber ? { ...inv, quantity: Math.max(0, inv.quantity - record.quantity) } : inv));
+  setPendingChanges((prev: number) => prev + 1);
+      }
     } catch (err) {
       console.error('Error dispensing medication:', err);
       setError('Failed to record dispensing. Please try again.');
@@ -142,7 +168,7 @@ export default function App() {
       await MedicationService.updateMedicationStock(medicationId, newQuantity);
 
       // Update local state
-      setMedications(prev => prev.map(med => {
+  setMedications((prev: Medication[]) => prev.map((med: Medication) => {
         if (med.id === medicationId) {
           return {
             ...med,
@@ -154,7 +180,7 @@ export default function App() {
         return med;
       }));
 
-      setPendingChanges(prev => prev + 1);
+  setPendingChanges((prev: number) => prev + 1);
     } catch (err) {
       console.error('Error updating stock:', err);
       setError('Failed to update stock. Please try again.');
@@ -162,13 +188,18 @@ export default function App() {
   };
 
   const handleSync = async () => {
-    // Simulate sync delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setPendingChanges(0);
+    if (!navigator.onLine) return;
+    // Process pending queue and refresh meds from server
+    const result = await syncService.flushQueue();
+    const freshMeds = await syncService.primeMedicationsCache();
+    const freshLogs = await MedicationService.getAllDispensingRecords();
+    setMedications(freshMeds);
+    setDispensingRecords(freshLogs);
+    if (result.processed > 0) setPendingChanges(0);
   };
 
   const getAlternatives = (medication: Medication): Medication[] => {
-    return medications.filter(med => 
+    return medications.filter((med: Medication) => 
       medication.alternatives.includes(med.id) && med.isAvailable
     );
   };
@@ -179,15 +210,15 @@ export default function App() {
   const UserSelector = () => (
     <div className="flex items-center gap-2">
       <User className="size-4 flex-shrink-0" />
-      <Select value={currentUser?.id || ''} onValueChange={(value) => {
-        const user = users.find(u => u.id === value);
+      <Select value={currentUser?.id || ''} onValueChange={(value: string) => {
+        const user = users.find((u: UserType) => u.id === value);
         if (user) setCurrentUser(user);
       }}>
         <SelectTrigger className="w-full min-w-0">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {users.map(user => (
+          {users.map((user: UserType) => (
             <SelectItem key={user.id} value={user.id}>
               <div className="flex items-center gap-2">
                 <span className="truncate">{user.name}</span>

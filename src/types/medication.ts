@@ -31,6 +31,7 @@ export interface DispensingRecord {
   patientInitials: string;
   quantity: number;
   lotNumber: string;
+  expirationDate?: Date;
   dispensedBy: string;
   dispensedAt: Date;
   indication: string;

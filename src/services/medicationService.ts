@@ -130,7 +130,7 @@ export class MedicationService {
       medicationName: record.medication_name,
       patientInitials: record.patient_id?.split('-')[0] + '.' + (record.patient_id?.split('-')[1]?.slice(0,1) || '') + '.',
       quantity: parseInt(record.amount_dispensed?.replace(/\D/g, '') || '1'),
-      lotNumber: record.lot_number || '',
+  lotNumber: record.lotNumber || '',
       dispensedBy: record.physician_name || '',
       dispensedAt: new Date(record.log_date),
       indication: record.dose_instructions || '',
@@ -147,10 +147,12 @@ export class MedicationService {
         medication_name: record.medicationName,
         dose_instructions: record.indication,
         lot_number: record.lotNumber,
-        expiration_date: '',
+        expiration_date: record.expirationDate ? record.expirationDate.toISOString().split('T')[0] : null,
         amount_dispensed: `${record.quantity} tabs`,
         physician_name: record.dispensedBy,
-        student_name: 'New Entry'
+        student_name: 'New Entry',
+        clinic_site_id: 'f906640b-be89-4beb-9639-888538010c54',
+        entered_by: '80a027c2-b810-4ba3-8f40-87a067ab53be'
       })
       .select()
       .single()
@@ -166,7 +168,8 @@ export class MedicationService {
       medicationName: data.medication_name,
       patientInitials: data.patient_id?.split('-')[0] + '.' + (data.patient_id?.split('-')[1]?.slice(0,1) || '') + '.',
       quantity: record.quantity,
-      lotNumber: record.lot_number || '',
+  lotNumber: record.lotNumber || '',
+      expirationDate: record.expirationDate,
       dispensedBy: data.physician_name,
       dispensedAt: new Date(data.log_date),
       indication: data.dose_instructions,

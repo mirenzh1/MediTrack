@@ -73,6 +73,7 @@ export function MedicationDetail({
       patientInitials: patientInitials.trim(),
       quantity: quantityNum,
       lotNumber: selectedLot,
+      expirationDate: availableLots.length > 0 ? availableLots[0].expirationDate : undefined,
       dispensedBy: currentUser.name,
       dispensedAt: new Date(),
       indication: indication.trim(),
