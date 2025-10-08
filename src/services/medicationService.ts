@@ -196,4 +196,108 @@ export class MedicationService {
       initials: user.first_name?.charAt(0) + user.last_name?.charAt(0) || user.first_name?.substring(0, 2) || 'XX'
     })) || []
   }
+
+  // Bulk Import for Inventory
+  static async bulkImportInventory(items: Array<{
+    name: string
+    strength: string
+    quantity: number
+    lotNumber?: string
+    expirationDate?: string
+    dosageForm?: string
+  }>, siteId: string, userId: string): Promise<{ success: number; failed: number; errors: string[] }> {
+    const results = {
+      success: 0,
+      failed: 0,
+      errors: [] as string[]
+    }
+
+    // Get default clinic site if not provided
+    let clinicSiteId = siteId
+    if (!clinicSiteId) {
+      const { data: sites } = await supabase
+        .from('clinic_sites')
+        .select('id')
+        .eq('is_active', true)
+        .limit(1)
+        .single()
+
+      clinicSiteId = sites?.id || ''
+    }
+
+    if (!clinicSiteId) {
+      throw new Error('No active clinic site found')
+    }
+
+    // Process each item
+    for (const item of items) {
+      try {
+        // 1. Check if medication exists in medications_new table
+        const { data: existingMed, error: searchError } = await supabase
+          .from('medications_new')
+          .select('id')
+          .eq('name', item.name)
+          .eq('strength', item.strength)
+          .eq('dosage_form', item.dosageForm || 'tablet')
+          .single()
+
+        let medicationId: string
+
+        if (existingMed) {
+          // Medication exists, use existing ID
+          medicationId = existingMed.id
+        } else {
+          // Medication doesn't exist, create new one
+          const { data: newMed, error: createError } = await supabase
+            .from('medications_new')
+            .insert({
+              name: item.name,
+              strength: item.strength,
+              dosage_form: item.dosageForm || 'tablet',
+              is_active: true
+            })
+            .select('id')
+            .single()
+
+          if (createError || !newMed) {
+            results.failed++
+            results.errors.push(`Failed to create medication ${item.name}: ${createError?.message}`)
+            continue
+          }
+
+          medicationId = newMed.id
+        }
+
+        // 2. Generate lot number and expiration date if not provided
+        const lotNumber = item.lotNumber || `BULK-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`
+        const expirationDate = item.expirationDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // +1 year
+
+        // 3. Create inventory record in inventory_new
+        const { error: inventoryError } = await supabase
+          .from('inventory_new')
+          .insert({
+            medication_id: medicationId,
+            site_id: clinicSiteId,
+            lot_number: lotNumber,
+            expiration_date: expirationDate,
+            qty_units: item.quantity,
+            low_stock_threshold: 10,
+            notes: item.lotNumber ? 'Imported from formulary' : 'Bulk import - placeholder lot number, please update'
+          })
+
+        if (inventoryError) {
+          results.failed++
+          results.errors.push(`Failed to create inventory for ${item.name}: ${inventoryError.message}`)
+        } else {
+          results.success++
+        }
+
+      } catch (error) {
+        results.failed++
+        results.errors.push(`Error processing ${item.name}: ${error}`)
+      }
+    }
+
+    return results
+  }
 }

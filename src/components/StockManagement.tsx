@@ -7,8 +7,10 @@ import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { AlertTriangle, CheckCircle, Edit, Package, Plus, Search, TrendingDown, TrendingUp } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Edit, Package, Plus, Search, TrendingDown, TrendingUp, Upload } from 'lucide-react';
 import { Medication, User, StockUpdate } from '../types/medication';
+import { BulkImportDialog, ImportedMedicationRow } from './BulkImportDialog';
+import { MedicationService } from '../services/medicationService';
 // Temporarily disabled problematic sonner import
 // import { toast } from 'sonner@2.0.3';
 
@@ -25,6 +27,7 @@ export function StockManagement({ medications, currentUser, onUpdateStock }: Sto
   const [newQuantity, setNewQuantity] = useState('');
   const [updateReason, setUpdateReason] = useState('');
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
   const statusOptions = [
     { value: 'all', label: 'All Items' },
@@ -119,6 +122,36 @@ export function StockManagement({ medications, currentUser, onUpdateStock }: Sto
     setIsUpdateDialogOpen(true);
   };
 
+  const handleBulkImport = async (items: ImportedMedicationRow[]) => {
+    try {
+      // Call the database service to bulk import inventory
+      const result = await MedicationService.bulkImportInventory(
+        items.map(item => ({
+          name: item.name,
+          strength: item.strength,
+          quantity: item.quantity,
+          lotNumber: item.lotNumber,
+          expirationDate: item.expirationDate,
+          dosageForm: 'tablet' // Default, can be extracted from file if needed
+        })),
+        '', // siteId - will use default active site
+        currentUser.id // userId
+      );
+
+      if (result.success > 0) {
+        alert(`Successfully imported ${result.success} items!\n${result.failed > 0 ? `Failed: ${result.failed} items` : ''}`);
+
+        // Refresh the page to show updated inventory
+        window.location.reload();
+      } else {
+        alert(`Import failed. ${result.errors.join('\n')}`);
+      }
+    } catch (error) {
+      console.error('Bulk import error:', error);
+      alert(`Import failed: ${error}`);
+    }
+  };
+
   const lowStockCount = medications.filter(med => med.isAvailable && med.currentStock <= med.minStock).length;
   const outOfStockCount = medications.filter(med => !med.isAvailable).length;
   const totalMedications = medications.length;
@@ -128,9 +161,19 @@ export function StockManagement({ medications, currentUser, onUpdateStock }: Sto
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Stock Management</h1>
-        <Badge variant="outline" className="text-sm">
-          Pharmacy Staff Access
-        </Badge>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="default"
+            onClick={() => setIsImportDialogOpen(true)}
+            className="gap-2"
+          >
+            <Upload className="size-4" />
+            Bulk Import
+          </Button>
+          <Badge variant="outline" className="text-sm">
+            Pharmacy Staff Access
+          </Badge>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -355,6 +398,13 @@ export function StockManagement({ medications, currentUser, onUpdateStock }: Sto
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Bulk Import Dialog */}
+      <BulkImportDialog
+        open={isImportDialogOpen}
+        onOpenChange={setIsImportDialogOpen}
+        onImport={handleBulkImport}
+      />
     </div>
   );
 }
