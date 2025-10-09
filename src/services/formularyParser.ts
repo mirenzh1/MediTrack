@@ -1,5 +1,4 @@
 import * as XLSX from 'xlsx';
-import mammoth from 'mammoth';
 import { ImportedMedicationRow } from '../components/BulkImportDialog';
 
 /**
@@ -62,18 +61,29 @@ async function parseWordFile(file: File): Promise<ImportedMedicationRow[]> {
       try {
         const arrayBuffer = e.target?.result as ArrayBuffer;
 
+        // Lazy-load Mammoth browser build to parse DOCX in the client
+        let mammothMod: any;
+        try {
+          // Prefer the browser bundle to avoid Node-specific shims
+          mammothMod = await import('mammoth/mammoth.browser.js');
+        } catch (_) {
+          // Fallback: try main entry if browser bundle path is unavailable
+          mammothMod = await import('mammoth');
+        }
+        const mammoth: any = mammothMod?.default ?? mammothMod;
+
         // Extract raw text and convert to table
         const result = await mammoth.extractRawText({ arrayBuffer });
         const text = result.value;
 
         // Parse text into rows (assuming tab or comma separated)
-        const lines = text.split('\n').filter(line => line.trim().length > 0);
-        const rows = lines.map(line => {
+        const lines: string[] = text.split('\n').filter((line: string) => line.trim().length > 0);
+        const rows: string[][] = lines.map((line: string) => {
           // Try to split by tab first, then by multiple spaces
           const parts = line.includes('\t')
             ? line.split('\t')
             : line.split(/\s{2,}/);
-          return parts.map(p => p.trim());
+          return parts.map((p: string) => p.trim());
         });
 
         const results = parseFormularyRows(rows);
