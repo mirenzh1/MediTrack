@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { FormularyView } from './components/FormularyView';
 import { MedicationDetail } from './components/MedicationDetail';
 import { DispensingLog } from './components/DispensingLog';
+import { EditDispensingRecordDialog } from './components/EditDispensingRecordDialog';
 import { StockManagement } from './components/StockManagement';
 import { OfflineSync } from './components/OfflineSync';
 import { LoginPage } from './components/LoginPage';
@@ -30,6 +31,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('formulary');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingRecord, setEditingRecord] = useState<DispensingRecord | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   // Load initial data from Supabase (online) or IndexedDB (offline fallback)
   useEffect(() => {
@@ -46,7 +49,7 @@ export default function App() {
         if (navigator.onLine) {
           // Online: fetch fresh and prime cache; start realtime
           [medicationsData, dispensingData, inventoryData, usersData] = await Promise.all([
-            syncService.primeMedicationsCache(),
+            MedicationService.getAllMedications(),
             MedicationService.getAllDispensingRecords(),
             MedicationService.getAllInventory(),
             MedicationService.getAllUsers()
@@ -159,6 +162,63 @@ export default function App() {
     } catch (err) {
       console.error('Error dispensing medication:', err);
       setError('Failed to record dispensing. Please try again.');
+    }
+  };
+
+  const handleEditDispensingRecord = (record: DispensingRecord) => {
+    setEditingRecord(record);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveEditedRecord = async (id: string, updates: Partial<Omit<DispensingRecord, 'id'>>) => {
+    try {
+      const updatedRecord = await MedicationService.updateDispensingRecord(id, updates);
+      setDispensingRecords(prev => prev.map(rec => rec.id === id ? updatedRecord : rec));
+    } catch (err) {
+      console.error('Error updating dispensing record:', err);
+      throw err; // Re-throw to let dialog handle error display
+    }
+  };
+
+  const handleAddLot = async (lot: Omit<InventoryItem, 'id' | 'isExpired'>) => {
+    try {
+      const newLot = await MedicationService.createInventoryItem(lot);
+      setInventory(prev => [...prev, newLot]);
+
+      // Reload medications to update total stock count
+      const updatedMedications = await MedicationService.getAllMedications();
+      setMedications(updatedMedications);
+    } catch (err) {
+      console.error('Error adding lot:', err);
+      setError('Failed to add lot. Please try again.');
+    }
+  };
+
+  const handleUpdateLot = async (id: string, updates: Partial<Pick<InventoryItem, 'quantity' | 'lotNumber' | 'expirationDate'>>) => {
+    try {
+      const updatedLot = await MedicationService.updateInventoryItem(id, updates);
+      setInventory(prev => prev.map(lot => lot.id === id ? updatedLot : lot));
+
+      // Reload medications to update total stock count
+      const updatedMedications = await MedicationService.getAllMedications();
+      setMedications(updatedMedications);
+    } catch (err) {
+      console.error('Error updating lot:', err);
+      setError('Failed to update lot. Please try again.');
+    }
+  };
+
+  const handleDeleteLot = async (id: string) => {
+    try {
+      await MedicationService.deleteInventoryItem(id);
+      setInventory(prev => prev.filter(lot => lot.id !== id));
+
+      // Reload medications to update total stock count
+      const updatedMedications = await MedicationService.getAllMedications();
+      setMedications(updatedMedications);
+    } catch (err) {
+      console.error('Error deleting lot:', err);
+      setError('Failed to delete lot. Please try again.');
     }
   };
 
@@ -347,6 +407,9 @@ export default function App() {
             onBack={handleBackToFormulary}
             onDispense={handleDispense}
             onSelectAlternative={handleMedicationSelect}
+            onAddLot={handleAddLot}
+            onUpdateLot={handleUpdateLot}
+            onDeleteLot={handleDeleteLot}
           />
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -385,7 +448,10 @@ export default function App() {
             </TabsContent>
 
             <TabsContent value="log" className="mt-0">
-              <DispensingLog records={dispensingRecords} />
+              <DispensingLog
+                records={dispensingRecords}
+                onEditRecord={handleEditDispensingRecord}
+              />
             </TabsContent>
 
             <TabsContent value="stock" className="mt-0">
@@ -406,7 +472,15 @@ export default function App() {
           </Tabs>
         )}
       </div>
-      
+
+      {/* Edit Dispensing Record Dialog */}
+      <EditDispensingRecordDialog
+        record={editingRecord}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSave={handleSaveEditedRecord}
+      />
+
       {/* Toaster temporarily disabled to fix import conflicts */}
     </div>
   );

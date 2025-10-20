@@ -6,15 +6,16 @@ import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { Search, Download, Calendar, Package, User, ChevronDown } from 'lucide-react';
+import { Search, Download, Calendar, Package, User, ChevronDown, Edit } from 'lucide-react';
 import { DispensingRecord } from '../types/medication';
 import * as XLSX from 'xlsx';
 
 interface DispensingLogProps {
   records: DispensingRecord[];
+  onEditRecord?: (record: DispensingRecord) => void;
 }
 
-export function DispensingLog({ records }: DispensingLogProps) {
+export function DispensingLog({ records, onEditRecord }: DispensingLogProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState<string>('all');
 
@@ -266,6 +267,7 @@ export function DispensingLog({ records }: DispensingLogProps) {
                   <TableHead>Physician</TableHead>
                   <TableHead>Student</TableHead>
                   <TableHead>Notes</TableHead>
+                  {onEditRecord && <TableHead className="w-[80px]">Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -309,6 +311,18 @@ export function DispensingLog({ records }: DispensingLogProps) {
                         </p>
                       )}
                     </TableCell>
+                    {onEditRecord && (
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onEditRecord(record)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Edit className="size-4" />
+                        </Button>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>

@@ -7,7 +7,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import { AlertTriangle, CheckCircle, ArrowLeft, Package, Clock, AlertCircle, Plus } from 'lucide-react';
+import { AlertTriangle, CheckCircle, ArrowLeft, Package, Clock, AlertCircle, Plus, Edit2, Trash2 } from 'lucide-react';
 import { Medication, DispensingRecord, InventoryItem, User } from '../types/medication';
 // Temporarily disabled problematic sonner import
 // import { toast } from 'sonner@2.0.3';
@@ -20,6 +20,9 @@ interface MedicationDetailProps {
   onBack: () => void;
   onDispense: (record: Omit<DispensingRecord, 'id'>) => void;
   onSelectAlternative: (medication: Medication) => void;
+  onAddLot?: (lot: Omit<InventoryItem, 'id' | 'isExpired'>) => void;
+  onUpdateLot?: (id: string, updates: Partial<Pick<InventoryItem, 'quantity' | 'lotNumber' | 'expirationDate'>>) => void;
+  onDeleteLot?: (id: string) => void;
 }
 
 export function MedicationDetail({
@@ -29,7 +32,10 @@ export function MedicationDetail({
   currentUser,
   onBack,
   onDispense,
-  onSelectAlternative
+  onSelectAlternative,
+  onAddLot,
+  onUpdateLot,
+  onDeleteLot
 }: MedicationDetailProps) {
   const [isDispenseDialogOpen, setIsDispenseDialogOpen] = useState(false);
   const [patientId, setPatientId] = useState('');
@@ -41,6 +47,13 @@ export function MedicationDetail({
   const [studentName, setStudentName] = useState('');
   const [indication, setIndication] = useState('');
   const [notes, setNotes] = useState('');
+
+  // Lot editing state
+  const [isLotDialogOpen, setIsLotDialogOpen] = useState(false);
+  const [editingLot, setEditingLot] = useState<InventoryItem | null>(null);
+  const [lotNumber, setLotNumber] = useState('');
+  const [lotQuantity, setLotQuantity] = useState('');
+  const [lotExpiration, setLotExpiration] = useState('');
 
   const medicationInventory = inventory.filter(inv => inv.medicationId === medication.id);
   const availableLots = medicationInventory.filter(inv => !inv.isExpired && inv.quantity > 0);
@@ -108,8 +121,63 @@ export function MedicationDetail({
     setNotes('');
   };
 
+  const handleAddLot = () => {
+    setEditingLot(null);
+    setLotNumber('');
+    setLotQuantity('');
+    setLotExpiration('');
+    setIsLotDialogOpen(true);
+  };
+
+  const handleEditLot = (lot: InventoryItem) => {
+    setEditingLot(lot);
+    setLotNumber(lot.lotNumber);
+    setLotQuantity(lot.quantity.toString());
+    setLotExpiration(lot.expirationDate.toISOString().split('T')[0]);
+    setIsLotDialogOpen(true);
+  };
+
+  const handleSaveLot = () => {
+    if (!lotNumber.trim() || !lotQuantity || !lotExpiration) {
+      alert('Please fill in all lot fields');
+      return;
+    }
+
+    const qty = parseInt(lotQuantity);
+    if (qty < 0) {
+      alert('Quantity must be positive');
+      return;
+    }
+
+    if (editingLot) {
+      // Update existing lot
+      onUpdateLot?.(editingLot.id, {
+        lotNumber: lotNumber.trim(),
+        quantity: qty,
+        expirationDate: new Date(lotExpiration)
+      });
+    } else {
+      // Add new lot
+      onAddLot?.({
+        medicationId: medication.id,
+        lotNumber: lotNumber.trim(),
+        quantity: qty,
+        expirationDate: new Date(lotExpiration)
+      });
+    }
+
+    setIsLotDialogOpen(false);
+  };
+
+  const handleDeleteLot = (lotId: string) => {
+    if (confirm('Are you sure you want to delete this lot?')) {
+      onDeleteLot?.(lotId);
+    }
+  };
+
   const stockStatus = getStockStatus();
   const StatusIcon = stockStatus.icon;
+  const canEditLots = currentUser.role === 'pharmacy_staff';
 
   return (
     <div className="space-y-4">
@@ -346,43 +414,84 @@ export function MedicationDetail({
       </div>
 
       {/* Inventory Details */}
-      {medicationInventory.length > 0 && (
-        <Card>
-          <CardHeader>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <Package className="size-4" />
               Inventory Details
             </CardTitle>
-          </CardHeader>
-          <CardContent>
+            {canEditLots && (
+              <Button variant="outline" size="sm" onClick={handleAddLot}>
+                <Plus className="size-4 mr-1" />
+                Add Lot
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {medicationInventory.length > 0 ? (
             <div className="space-y-2">
               {medicationInventory.map(inv => (
-                <div key={inv.id} className="flex items-center justify-between p-2 border rounded">
-                  <div>
+                <div key={inv.id} className="flex items-center justify-between p-3 border rounded">
+                  <div className="flex-1">
                     <p className="font-medium">Lot: {inv.lotNumber}</p>
                     <p className="text-sm text-muted-foreground">
-                      Quantity: {inv.quantity}
+                      Quantity: {inv.quantity} units
                     </p>
                   </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-1">
-                      <Clock className="size-3" />
-                      <span className="text-sm">
-                        Exp: {inv.expirationDate.toLocaleDateString()}
-                      </span>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <div className="flex items-center gap-1">
+                        <Clock className="size-3" />
+                        <span className="text-sm">
+                          Exp: {inv.expirationDate.toLocaleDateString()}
+                        </span>
+                      </div>
+                      {inv.isExpired && (
+                        <Badge variant="destructive" className="text-xs mt-1">
+                          Expired
+                        </Badge>
+                      )}
                     </div>
-                    {inv.isExpired && (
-                      <Badge variant="destructive" className="text-xs mt-1">
-                        Expired
-                      </Badge>
+                    {canEditLots && (
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditLot(inv)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Edit2 className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteLot(inv.id)}
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          ) : (
+            <div className="text-center py-6 text-muted-foreground">
+              <Package className="size-12 mx-auto mb-2 opacity-30" />
+              <p>No lot numbers recorded</p>
+              {canEditLots && (
+                <Button variant="outline" size="sm" onClick={handleAddLot} className="mt-3">
+                  <Plus className="size-4 mr-1" />
+                  Add First Lot
+                </Button>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Alternatives */}
       {(!medication.isAvailable || medication.currentStock <= medication.minStock) && alternatives.length > 0 && (
@@ -412,6 +521,54 @@ export function MedicationDetail({
           </CardContent>
         </Card>
       )}
+
+      {/* Lot Edit/Add Dialog */}
+      <Dialog open={isLotDialogOpen} onOpenChange={setIsLotDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingLot ? 'Edit Lot Number' : 'Add Lot Number'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="lot-number">Lot Number *</Label>
+              <Input
+                id="lot-number"
+                value={lotNumber}
+                onChange={(e) => setLotNumber(e.target.value)}
+                placeholder="e.g., EW0646, 11953A"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lot-quantity">Quantity *</Label>
+              <Input
+                id="lot-quantity"
+                type="number"
+                value={lotQuantity}
+                onChange={(e) => setLotQuantity(e.target.value)}
+                min="0"
+                placeholder="e.g., 100"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lot-expiration">Expiration Date *</Label>
+              <Input
+                id="lot-expiration"
+                type="date"
+                value={lotExpiration}
+                onChange={(e) => setLotExpiration(e.target.value)}
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-4">
+              <Button variant="outline" onClick={() => setIsLotDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveLot}>
+                {editingLot ? 'Update' : 'Add'} Lot
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

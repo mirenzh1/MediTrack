@@ -5,38 +5,74 @@ export class MedicationService {
 
   // Medications
   static async getAllMedications(): Promise<Medication[]> {
-    const { data, error } = await supabase
-      .from('medications')
+    // First get all medications
+    const { data: medications, error: medError } = await supabase
+      .from('medications_new')
       .select('*')
       .eq('is_active', true)
       .order('name')
 
-    if (error) {
-      console.error('Error fetching medications:', error)
+    if (medError) {
+      console.error('Error fetching medications:', medError)
       throw new Error('Failed to fetch medications')
     }
 
-    return data?.map(med => ({
-      id: med.id,
-      name: med.name,
-      genericName: med.name, // Using name as generic name for imported data
-      strength: med.strength || '',
-      dosageForm: med.dosage_form || 'tablet',
-      category: 'General', // Default category
-      currentStock: med.current_stock || 0, // Use actual stock from database
-      minStock: 20,
-      maxStock: 100,
-      isAvailable: med.is_active && (med.current_stock || 0) > 0,
-      lastUpdated: new Date(med.created_at || new Date()),
-      alternatives: [],
-      commonUses: [],
-      contraindications: []
-    })) || []
+    // Then get all inventory
+    const { data: inventory, error: invError } = await supabase
+      .from('inventory_new')
+      .select('medication_id, qty_units')
+    
+      console.log('Inventory data:', inventory)
+
+    if (invError) {
+      console.error('Error fetching inventory:', invError)
+    }
+
+    // Group inventory by medication_id
+    const inventoryMap = new Map<string, number>()
+    console.log('Total inventory items fetched:', inventory?.length)
+    inventory?.forEach(inv => {
+      const current = inventoryMap.get(inv.medication_id) || 0
+      inventoryMap.set(inv.medication_id, current + inv.qty_units)
+      console.log(`Inventory: med_id=${inv.medication_id}, qty=${inv.qty_units}, running_total=${current + inv.qty_units}`)
+    })
+
+    console.log('Inventory map:', Array.from(inventoryMap.entries()))
+
+    return medications?.map(med => {
+      const totalStock = inventoryMap.get(med.id) || 0
+
+      // Debug logging
+      if (med.name === 'Acetaminophen') {
+        console.log('=== ACETAMINOPHEN DEBUG ===')
+        console.log('Acetaminophen ID:', med.id)
+        console.log('Acetaminophen inventory items:', inventory?.filter(i => i.medication_id === med.id))
+        console.log('Acetaminophen total stock from map:', totalStock)
+        console.log('Map has this key?', inventoryMap.has(med.id))
+      }
+
+      return {
+        id: med.id,
+        name: med.name,
+        genericName: med.name,
+        strength: med.strength || '',
+        dosageForm: med.dosage_form || 'tablet',
+        category: 'General',
+        currentStock: totalStock,
+        minStock: 20,
+        maxStock: 100,
+        isAvailable: med.is_active && totalStock > 0,
+        lastUpdated: new Date(med.created_at || new Date()),
+        alternatives: [],
+        commonUses: [],
+        contraindications: []
+      }
+    }) || []
   }
 
   static async getMedicationById(id: string): Promise<Medication | null> {
     const { data, error } = await supabase
-      .from('medications')
+      .from('medications_new')
       .select('*')
       .eq('id', id)
       .single()
@@ -68,7 +104,7 @@ export class MedicationService {
 
   static async updateMedicationStock(medicationId: string, newStock: number): Promise<void> {
     const { error } = await supabase
-      .from('medications')
+      .from('medications_new')
       .update({
         current_stock: newStock,
         is_available: newStock > 0,
@@ -85,7 +121,7 @@ export class MedicationService {
   // Inventory
   static async getInventoryByMedicationId(medicationId: string): Promise<InventoryItem[]> {
     const { data, error } = await supabase
-      .from('inventory_items')
+      .from('inventory_new')
       .select('*')
       .eq('medication_id', medicationId)
       .order('expiration_date')
@@ -100,16 +136,99 @@ export class MedicationService {
       medicationId: item.medication_id,
       lotNumber: item.lot_number,
       expirationDate: new Date(item.expiration_date),
-      quantity: item.quantity,
+      quantity: item.qty_units,
       isExpired: new Date(item.expiration_date) < new Date()
     })) || []
   }
 
   static async getAllInventory(): Promise<InventoryItem[]> {
-    // TODO: inventory_items table doesn't exist yet
-    // Return empty array for now
-    console.warn('inventory_items table not yet implemented')
-    return []
+    const { data, error } = await supabase
+      .from('inventory_new')
+      .select('*')
+      .order('expiration_date')
+
+    if (error) {
+      console.error('Error fetching all inventory:', error)
+      throw new Error('Failed to fetch inventory')
+    }
+
+    return data?.map(item => ({
+      id: item.id,
+      medicationId: item.medication_id,
+      lotNumber: item.lot_number,
+      expirationDate: new Date(item.expiration_date),
+      quantity: item.qty_units,
+      isExpired: new Date(item.expiration_date) < new Date()
+    })) || []
+  }
+
+  static async createInventoryItem(item: Omit<InventoryItem, 'id' | 'isExpired'>): Promise<InventoryItem> {
+    const { data, error } = await supabase
+      .from('inventory_new')
+      .insert({
+        medication_id: item.medicationId,
+        lot_number: item.lotNumber,
+        expiration_date: item.expirationDate.toISOString().split('T')[0],
+        qty_units: item.quantity,
+        low_stock_threshold: 10
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error creating inventory item:', error)
+      throw new Error('Failed to create inventory item')
+    }
+
+    return {
+      id: data.id,
+      medicationId: data.medication_id,
+      lotNumber: data.lot_number,
+      expirationDate: new Date(data.expiration_date),
+      quantity: data.qty_units,
+      isExpired: new Date(data.expiration_date) < new Date()
+    }
+  }
+
+  static async updateInventoryItem(id: string, updates: Partial<Pick<InventoryItem, 'quantity' | 'lotNumber' | 'expirationDate'>>): Promise<InventoryItem> {
+    const updateData: any = {}
+
+    if (updates.quantity !== undefined) updateData.qty_units = updates.quantity
+    if (updates.lotNumber !== undefined) updateData.lot_number = updates.lotNumber
+    if (updates.expirationDate !== undefined) updateData.expiration_date = updates.expirationDate.toISOString().split('T')[0]
+
+    const { data, error } = await supabase
+      .from('inventory_new')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error updating inventory item:', error)
+      throw new Error('Failed to update inventory item')
+    }
+
+    return {
+      id: data.id,
+      medicationId: data.medication_id,
+      lotNumber: data.lot_number,
+      expirationDate: new Date(data.expiration_date),
+      quantity: data.qty_units,
+      isExpired: new Date(data.expiration_date) < new Date()
+    }
+  }
+
+  static async deleteInventoryItem(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('inventory_new')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      console.error('Error deleting inventory item:', error)
+      throw new Error('Failed to delete inventory item')
+    }
   }
 
   // Dispensing Records
@@ -126,33 +245,107 @@ export class MedicationService {
 
     return data?.map(record => ({
       id: record.id,
-      medicationId: record.medication_name || '',
+      medicationId: record.medication_id || record.medication_name || '',
       medicationName: record.medication_name,
+      patientId: record.patient_id || '',
       patientInitials: record.patient_id?.split('-')[0] + '.' + (record.patient_id?.split('-')[1]?.slice(0,1) || '') + '.',
       quantity: parseInt(record.amount_dispensed?.replace(/\D/g, '') || '1'),
-  lotNumber: record.lotNumber || '',
-      dispensedBy: record.physician_name || '',
+      dose: record.dose_instructions || '',
+      lotNumber: record.lot_number || '',
+      expirationDate: record.expiration_date ? new Date(record.expiration_date) : undefined,
+      dispensedBy: record.entered_by || 'System',
+      physicianName: record.physician_name || '',
+      studentName: record.student_name || undefined,
       dispensedAt: new Date(record.log_date),
       indication: record.dose_instructions || '',
-      notes: `Student: ${record.student_name || 'N/A'}`
+      notes: record.notes || undefined
     })) || []
   }
 
+  static async updateDispensingRecord(id: string, updates: Partial<Omit<DispensingRecord, 'id'>>): Promise<DispensingRecord> {
+    const updateData: any = {}
+
+    if (updates.patientId !== undefined) updateData.patient_id = updates.patientId
+    if (updates.dose !== undefined) updateData.dose_instructions = updates.dose
+    if (updates.quantity !== undefined) updateData.amount_dispensed = `${updates.quantity} tabs`
+    if (updates.lotNumber !== undefined) updateData.lot_number = updates.lotNumber
+    if (updates.expirationDate !== undefined) updateData.expiration_date = updates.expirationDate.toISOString().split('T')[0]
+    if (updates.physicianName !== undefined) updateData.physician_name = updates.physicianName
+    if (updates.studentName !== undefined) updateData.student_name = updates.studentName
+    if (updates.indication !== undefined) updateData.dose_instructions = updates.indication
+    if (updates.notes !== undefined) updateData.notes = updates.notes
+
+    updateData.updated_at = new Date().toISOString()
+
+    const { data, error } = await supabase
+      .from('dispensing_logs')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error updating dispensing record:', error)
+      throw new Error('Failed to update dispensing record')
+    }
+
+    return {
+      id: data.id,
+      medicationId: data.medication_id || data.medication_name,
+      medicationName: data.medication_name,
+      patientId: data.patient_id,
+      patientInitials: data.patient_id?.split('-')[0] + '.' + (data.patient_id?.split('-')[1]?.slice(0,1) || '') + '.',
+      quantity: parseInt(data.amount_dispensed?.replace(/\D/g, '') || '1'),
+      dose: data.dose_instructions,
+      lotNumber: data.lot_number || '',
+      expirationDate: data.expiration_date ? new Date(data.expiration_date) : undefined,
+      dispensedBy: data.entered_by || 'System',
+      physicianName: data.physician_name,
+      studentName: data.student_name || undefined,
+      dispensedAt: new Date(data.log_date),
+      indication: data.dose_instructions,
+      notes: data.notes || undefined
+    }
+  }
+
   static async createDispensingRecord(record: Omit<DispensingRecord, 'id'>): Promise<DispensingRecord> {
+    // Get the first active clinic site (TODO: make this configurable per session)
+    const { data: sites } = await supabase
+      .from('clinic_sites')
+      .select('id')
+      .eq('is_active', true)
+      .limit(1)
+      .single()
+
+    const clinicSiteId = sites?.id || null
+
+    // Get the current user ID from the dispensedBy name (pharmacy staff)
+    // This is a temporary solution until we implement proper user session management
+    const { data: userData } = await supabase
+      .from('users')
+      .select('id')
+      .ilike('first_name', `%${record.dispensedBy.split(' ')[0]}%`)
+      .limit(1)
+      .single()
+
+    const enteredBy = userData?.id || null
+
     const { data, error } = await supabase
       .from('dispensing_logs')
       .insert({
         log_date: record.dispensedAt.toISOString().split('T')[0],
-        patient_id: `2025-${Math.floor(Math.random() * 1000)}`,
+        patient_id: record.patientId,
+        medication_id: record.medicationId,
         medication_name: record.medicationName,
-        dose_instructions: record.indication,
+        dose_instructions: record.dose,
         lot_number: record.lotNumber,
         expiration_date: record.expirationDate ? record.expirationDate.toISOString().split('T')[0] : null,
         amount_dispensed: `${record.quantity} tabs`,
-        physician_name: record.dispensedBy,
-        student_name: 'New Entry',
-        clinic_site_id: 'f906640b-be89-4beb-9639-888538010c54',
-        entered_by: '80a027c2-b810-4ba3-8f40-87a067ab53be'
+        physician_name: record.physicianName,
+        student_name: record.studentName || null,
+        clinic_site_id: clinicSiteId,
+        entered_by: enteredBy,
+        notes: record.notes || null
       })
       .select()
       .single()
@@ -166,14 +359,18 @@ export class MedicationService {
       id: data.id,
       medicationId: record.medicationId,
       medicationName: data.medication_name,
+      patientId: data.patient_id,
       patientInitials: data.patient_id?.split('-')[0] + '.' + (data.patient_id?.split('-')[1]?.slice(0,1) || '') + '.',
       quantity: record.quantity,
-  lotNumber: record.lotNumber || '',
+      dose: data.dose_instructions,
+      lotNumber: record.lotNumber || '',
       expirationDate: record.expirationDate,
-      dispensedBy: data.physician_name,
+      dispensedBy: record.dispensedBy,
+      physicianName: data.physician_name,
+      studentName: data.student_name || undefined,
       dispensedAt: new Date(data.log_date),
-      indication: data.dose_instructions,
-      notes: `Student: ${data.student_name || 'N/A'}`
+      indication: record.indication,
+      notes: data.notes || undefined
     }
   }
 
