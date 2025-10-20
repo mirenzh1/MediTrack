@@ -28,11 +28,15 @@ export interface DispensingRecord {
   id: string;
   medicationId: string;
   medicationName: string;
-  patientInitials: string;
+  patientId: string;              // e.g., "2025-196", "2635-140"
+  patientInitials: string;        // Still keep for quick reference
   quantity: number;
+  dose: string;                   // e.g., "1 tab", "PRN", "1 gtt"
   lotNumber: string;
   expirationDate?: Date;
-  dispensedBy: string;
+  dispensedBy: string;            // Pharmacy staff who dispensed
+  physicianName: string;          // Physician who prescribed
+  studentName?: string;           // Student observer/trainee
   dispensedAt: Date;
   indication: string;
   notes?: string;

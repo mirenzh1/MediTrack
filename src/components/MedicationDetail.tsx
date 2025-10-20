@@ -22,18 +22,23 @@ interface MedicationDetailProps {
   onSelectAlternative: (medication: Medication) => void;
 }
 
-export function MedicationDetail({ 
-  medication, 
-  alternatives, 
+export function MedicationDetail({
+  medication,
+  alternatives,
   inventory,
   currentUser,
-  onBack, 
+  onBack,
   onDispense,
-  onSelectAlternative 
+  onSelectAlternative
 }: MedicationDetailProps) {
   const [isDispenseDialogOpen, setIsDispenseDialogOpen] = useState(false);
+  const [patientId, setPatientId] = useState('');
   const [patientInitials, setPatientInitials] = useState('');
   const [quantity, setQuantity] = useState('');
+  const [dose, setDose] = useState('');
+  const [selectedLotNumber, setSelectedLotNumber] = useState('');
+  const [physicianName, setPhysicianName] = useState('');
+  const [studentName, setStudentName] = useState('');
   const [indication, setIndication] = useState('');
   const [notes, setNotes] = useState('');
 
@@ -51,30 +56,37 @@ export function MedicationDetail({
   };
 
   const handleDispense = () => {
-    if (!patientInitials.trim() || !quantity || !indication.trim()) {
-      console.log('Please fill in all required fields');
+    // Validate required fields
+    if (!patientId.trim() || !patientInitials.trim() || !quantity || !dose.trim() ||
+        !physicianName.trim() || !indication.trim()) {
+      alert('Please fill in all required fields (marked with *)');
       return;
     }
 
     const quantityNum = parseInt(quantity);
     if (quantityNum <= 0 || quantityNum > medication.currentStock) {
-      console.log('Invalid quantity');
+      alert('Invalid quantity');
       return;
     }
 
-    // Use first available lot or generate temporary lot number
-    const selectedLot = availableLots.length > 0
-      ? availableLots[0].lotNumber
-      : `TEMP-${Date.now().toString().slice(-6)}`;
+    // Use selected lot or generate temporary lot number
+    const lotToUse = selectedLotNumber ||
+      (availableLots.length > 0 ? availableLots[0].lotNumber : `TEMP-${Date.now().toString().slice(-6)}`);
+
+    const selectedLot = availableLots.find(lot => lot.lotNumber === lotToUse);
 
     const record: Omit<DispensingRecord, 'id'> = {
       medicationId: medication.id,
       medicationName: `${medication.name} ${medication.strength}`,
+      patientId: patientId.trim(),
       patientInitials: patientInitials.trim(),
       quantity: quantityNum,
-      lotNumber: selectedLot,
-      expirationDate: availableLots.length > 0 ? availableLots[0].expirationDate : undefined,
+      dose: dose.trim(),
+      lotNumber: lotToUse,
+      expirationDate: selectedLot?.expirationDate,
       dispensedBy: currentUser.name,
+      physicianName: physicianName.trim(),
+      studentName: studentName.trim() || undefined,
       dispensedAt: new Date(),
       indication: indication.trim(),
       notes: notes.trim() || undefined
@@ -85,8 +97,13 @@ export function MedicationDetail({
     setIsDispenseDialogOpen(false);
 
     // Reset form
+    setPatientId('');
     setPatientInitials('');
     setQuantity('');
+    setDose('');
+    setSelectedLotNumber('');
+    setPhysicianName('');
+    setStudentName('');
     setIndication('');
     setNotes('');
   };
