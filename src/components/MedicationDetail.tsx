@@ -146,36 +146,103 @@ export function MedicationDetail({
                     Dispense
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Dispense {medication.name}</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="initials">Patient Initials *</Label>
-                      <Input
-                        id="initials"
-                        placeholder="e.g., J.D."
-                        value={patientInitials}
-                        onChange={(e) => setPatientInitials(e.target.value)}
-                      />
+                    {/* Patient Information */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="patientId">Patient ID *</Label>
+                        <Input
+                          id="patientId"
+                          placeholder="e.g., 2025-196"
+                          value={patientId}
+                          onChange={(e) => setPatientId(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="initials">Patient Initials *</Label>
+                        <Input
+                          id="initials"
+                          placeholder="e.g., J.D."
+                          value={patientInitials}
+                          onChange={(e) => setPatientInitials(e.target.value)}
+                        />
+                      </div>
                     </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="quantity">Quantity *</Label>
-                      <Input
-                        id="quantity"
-                        type="number"
-                        min="1"
-                        max={medication.currentStock}
-                        value={quantity}
-                        onChange={(e) => setQuantity(e.target.value)}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Available: {medication.currentStock} units
-                      </p>
+
+                    {/* Medication Details */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="quantity">Amount Dispensed *</Label>
+                        <Input
+                          id="quantity"
+                          type="number"
+                          min="1"
+                          max={medication.currentStock}
+                          value={quantity}
+                          onChange={(e) => setQuantity(e.target.value)}
+                          placeholder="e.g., 30"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Available: {medication.currentStock} units
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="dose">Dose Instructions *</Label>
+                        <Input
+                          id="dose"
+                          placeholder="e.g., 1 tab, PRN, 1 gtt"
+                          value={dose}
+                          onChange={(e) => setDose(e.target.value)}
+                        />
+                      </div>
                     </div>
-                    
+
+                    {/* Lot Selection */}
+                    {availableLots.length > 0 && (
+                      <div className="space-y-2">
+                        <Label htmlFor="lot">Lot Number *</Label>
+                        <Select value={selectedLotNumber} onValueChange={setSelectedLotNumber}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select lot number" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableLots.map(lot => (
+                              <SelectItem key={lot.lotNumber} value={lot.lotNumber}>
+                                {lot.lotNumber} - Exp: {lot.expirationDate.toLocaleDateString()} - Qty: {lot.quantity}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    {/* Provider Information */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="physician">Physician Name *</Label>
+                        <Input
+                          id="physician"
+                          placeholder="e.g., Dr. Smith"
+                          value={physicianName}
+                          onChange={(e) => setPhysicianName(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="student">Student Name</Label>
+                        <Input
+                          id="student"
+                          placeholder="e.g., Jane Doe (optional)"
+                          value={studentName}
+                          onChange={(e) => setStudentName(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Indication */}
                     <div className="space-y-2">
                       <Label htmlFor="indication">Indication *</Label>
                       <Select value={indication} onValueChange={setIndication}>
@@ -190,7 +257,8 @@ export function MedicationDetail({
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
+                    {/* Notes */}
                     <div className="space-y-2">
                       <Label htmlFor="notes">Notes</Label>
                       <Textarea
@@ -198,19 +266,16 @@ export function MedicationDetail({
                         placeholder="Optional notes..."
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
+                        rows={2}
                       />
                     </div>
-                    
-                    {availableLots.length > 0 && (
-                      <div className="p-3 bg-muted rounded-md">
-                        <p className="text-sm font-medium mb-1">Lot Information</p>
-                        <p className="text-sm text-muted-foreground">
-                          Lot: {availableLots[0].lotNumber} • 
-                          Exp: {availableLots[0].expirationDate.toLocaleDateString()}
-                        </p>
-                      </div>
-                    )}
-                    
+
+                    {/* Dispensed By (auto-filled) */}
+                    <div className="p-3 bg-muted rounded-md">
+                      <p className="text-sm font-medium mb-1">Dispensed By</p>
+                      <p className="text-sm text-muted-foreground">{currentUser.name}</p>
+                    </div>
+
                     <Button onClick={handleDispense} className="w-full">
                       Confirm Dispensing
                     </Button>
