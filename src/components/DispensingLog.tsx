@@ -72,22 +72,30 @@ export function DispensingLog({ records }: DispensingLogProps) {
 
   const exportToCSV = () => {
     const headers = [
-      'Date/Time',
+      'Date',
+      'Patient ID',
       'Medication',
-      'Patient Initials',
-      'Quantity',
+      'Dose',
       'Lot Number',
+      'Expiration',
+      'Amount Dispensed',
+      'Physician Name',
+      'Student Name',
       'Dispensed By',
       'Indication',
       'Notes'
     ];
 
     const csvData = filteredRecords.map(record => [
-      record.dispensedAt.toLocaleString(),
+      record.dispensedAt.toLocaleDateString(),
+      record.patientId,
       record.medicationName,
-      record.patientInitials,
-      record.quantity.toString(),
+      record.dose,
       record.lotNumber,
+      record.expirationDate?.toLocaleDateString() || '',
+      record.quantity.toString(),
+      record.physicianName,
+      record.studentName || '',
       record.dispensedBy,
       record.indication,
       record.notes || ''
@@ -109,23 +117,16 @@ export function DispensingLog({ records }: DispensingLogProps) {
   };
 
   const exportToExcel = () => {
-    const headers = [
-      'Date/Time',
-      'Medication',
-      'Patient Initials',
-      'Quantity',
-      'Lot Number',
-      'Dispensed By',
-      'Indication',
-      'Notes'
-    ];
-
     const excelData = filteredRecords.map(record => ({
-      'Date/Time': record.dispensedAt.toLocaleString(),
+      'Date': record.dispensedAt.toLocaleDateString(),
+      'Patient ID': record.patientId,
       'Medication': record.medicationName,
-      'Patient Initials': record.patientInitials,
-      'Quantity': record.quantity,
+      'Dose': record.dose,
       'Lot Number': record.lotNumber,
+      'Expiration': record.expirationDate?.toLocaleDateString() || '',
+      'Amount Dispensed': record.quantity,
+      'Physician Name': record.physicianName,
+      'Student Name': record.studentName || '',
       'Dispensed By': record.dispensedBy,
       'Indication': record.indication,
       'Notes': record.notes || ''
@@ -255,53 +256,51 @@ export function DispensingLog({ records }: DispensingLogProps) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date/Time</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Patient ID</TableHead>
                   <TableHead>Medication</TableHead>
-                  <TableHead>Patient</TableHead>
-                  <TableHead>Qty</TableHead>
+                  <TableHead>Dose</TableHead>
                   <TableHead>Lot #</TableHead>
-                  <TableHead>Dispensed By</TableHead>
-                  <TableHead>Indication</TableHead>
+                  <TableHead>Exp</TableHead>
+                  <TableHead>Qty</TableHead>
+                  <TableHead>Physician</TableHead>
+                  <TableHead>Student</TableHead>
                   <TableHead>Notes</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredRecords.map(record => (
                   <TableRow key={record.id}>
+                    <TableCell className="text-sm">
+                      {record.dispensedAt.toLocaleDateString()}
+                    </TableCell>
                     <TableCell>
-                      <div className="text-sm">
-                        <p>{record.dispensedAt.toLocaleDateString()}</p>
-                        <p className="text-muted-foreground">
-                          {record.dispensedAt.toLocaleTimeString([], { 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
-                          })}
-                        </p>
-                      </div>
+                      <Badge variant="outline" className="text-xs font-mono">
+                        {record.patientId}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
                         <p className="font-medium">{record.medicationName}</p>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-xs">
-                        {record.patientInitials}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-medium">{record.quantity}</span>
+                    <TableCell className="text-sm">
+                      {record.dose}
                     </TableCell>
                     <TableCell>
                       <span className="text-sm font-mono">{record.lotNumber}</span>
                     </TableCell>
-                    <TableCell>
-                      <span className="text-sm">{record.dispensedBy}</span>
+                    <TableCell className="text-sm">
+                      {record.expirationDate?.toLocaleDateString() || '-'}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary" className="text-xs">
-                        {record.indication}
-                      </Badge>
+                      <span className="font-medium">{record.quantity}</span>
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {record.physicianName}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {record.studentName || '-'}
                     </TableCell>
                     <TableCell className="max-w-[150px]">
                       {record.notes && (
