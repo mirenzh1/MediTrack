@@ -145,7 +145,6 @@ export class SyncService {
       amount_dispensed: `${p.quantity} units`,
       physician_name: p.dispensedBy,
       student_name: 'Offline Sync',
-      clinic_site_id: 'f906640b-be89-4beb-9639-888538010c54',
       entered_by: '80a027c2-b810-4ba3-8f40-87a067ab53be',
     })
     if (insertError) throw insertError

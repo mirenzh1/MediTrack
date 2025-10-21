@@ -7,7 +7,7 @@ export class MedicationService {
   static async getAllMedications(): Promise<Medication[]> {
     // First get all medications
     const { data: medications, error: medError } = await supabase
-      .from('medications_new')
+      .from('medications')
       .select('*')
       .eq('is_active', true)
       .order('name')
@@ -19,10 +19,10 @@ export class MedicationService {
 
     // Then get all inventory
     const { data: inventory, error: invError } = await supabase
-      .from('inventory_new')
+      .from('inventory')
       .select('medication_id, qty_units')
     
-      console.log('Inventory data:', inventory)
+      //console.log('Inventory data:', inventory)
 
     if (invError) {
       console.error('Error fetching inventory:', invError)
@@ -34,22 +34,22 @@ export class MedicationService {
     inventory?.forEach(inv => {
       const current = inventoryMap.get(inv.medication_id) || 0
       inventoryMap.set(inv.medication_id, current + inv.qty_units)
-      console.log(`Inventory: med_id=${inv.medication_id}, qty=${inv.qty_units}, running_total=${current + inv.qty_units}`)
+      // console.log(`Inventory: med_id=${inv.medication_id}, qty=${inv.qty_units}, running_total=${current + inv.qty_units}`)
     })
 
-    console.log('Inventory map:', Array.from(inventoryMap.entries()))
+    // console.log('Inventory map:', Array.from(inventoryMap.entries()))
 
     return medications?.map(med => {
       const totalStock = inventoryMap.get(med.id) || 0
 
       // Debug logging
-      if (med.name === 'Acetaminophen') {
-        console.log('=== ACETAMINOPHEN DEBUG ===')
-        console.log('Acetaminophen ID:', med.id)
-        console.log('Acetaminophen inventory items:', inventory?.filter(i => i.medication_id === med.id))
-        console.log('Acetaminophen total stock from map:', totalStock)
-        console.log('Map has this key?', inventoryMap.has(med.id))
-      }
+      // if (med.name === 'Acetaminophen') {
+      //   console.log('=== ACETAMINOPHEN DEBUG ===')
+      //   console.log('Acetaminophen ID:', med.id)
+      //   console.log('Acetaminophen inventory items:', inventory?.filter(i => i.medication_id === med.id))
+      //   console.log('Acetaminophen total stock from map:', totalStock)
+      //   console.log('Map has this key?', inventoryMap.has(med.id))
+      // }
 
       return {
         id: med.id,
@@ -72,7 +72,7 @@ export class MedicationService {
 
   static async getMedicationById(id: string): Promise<Medication | null> {
     const { data, error } = await supabase
-      .from('medications_new')
+      .from('medications')
       .select('*')
       .eq('id', id)
       .single()
@@ -104,7 +104,7 @@ export class MedicationService {
 
   static async updateMedicationStock(medicationId: string, newStock: number): Promise<void> {
     const { error } = await supabase
-      .from('medications_new')
+      .from('medications')
       .update({
         current_stock: newStock,
         is_available: newStock > 0,
@@ -121,7 +121,7 @@ export class MedicationService {
   // Inventory
   static async getInventoryByMedicationId(medicationId: string): Promise<InventoryItem[]> {
     const { data, error } = await supabase
-      .from('inventory_new')
+      .from('inventory')
       .select('*')
       .eq('medication_id', medicationId)
       .order('expiration_date')
@@ -143,7 +143,7 @@ export class MedicationService {
 
   static async getAllInventory(): Promise<InventoryItem[]> {
     const { data, error } = await supabase
-      .from('inventory_new')
+      .from('inventory')
       .select('*')
       .order('expiration_date')
 
@@ -164,7 +164,7 @@ export class MedicationService {
 
   static async createInventoryItem(item: Omit<InventoryItem, 'id' | 'isExpired'>): Promise<InventoryItem> {
     const { data, error } = await supabase
-      .from('inventory_new')
+      .from('inventory')
       .insert({
         medication_id: item.medicationId,
         lot_number: item.lotNumber,
@@ -198,7 +198,7 @@ export class MedicationService {
     if (updates.expirationDate !== undefined) updateData.expiration_date = updates.expirationDate.toISOString().split('T')[0]
 
     const { data, error } = await supabase
-      .from('inventory_new')
+      .from('inventory')
       .update(updateData)
       .eq('id', id)
       .select()
@@ -221,7 +221,7 @@ export class MedicationService {
 
   static async deleteInventoryItem(id: string): Promise<void> {
     const { error } = await supabase
-      .from('inventory_new')
+      .from('inventory')
       .delete()
       .eq('id', id)
 
@@ -309,16 +309,6 @@ export class MedicationService {
   }
 
   static async createDispensingRecord(record: Omit<DispensingRecord, 'id'>): Promise<DispensingRecord> {
-    // Get the first active clinic site (TODO: make this configurable per session)
-    const { data: sites } = await supabase
-      .from('clinic_sites')
-      .select('id')
-      .eq('is_active', true)
-      .limit(1)
-      .single()
-
-    const clinicSiteId = sites?.id || null
-
     // Get the current user ID from the dispensedBy name (pharmacy staff)
     // This is a temporary solution until we implement proper user session management
     const { data: userData } = await supabase
@@ -343,7 +333,6 @@ export class MedicationService {
         amount_dispensed: `${record.quantity} tabs`,
         physician_name: record.physicianName,
         student_name: record.studentName || null,
-        clinic_site_id: clinicSiteId,
         entered_by: enteredBy,
         notes: record.notes || null
       })
@@ -402,36 +391,19 @@ export class MedicationService {
     lotNumber?: string
     expirationDate?: string
     dosageForm?: string
-  }>, siteId: string, userId: string): Promise<{ success: number; failed: number; errors: string[] }> {
+  }>): Promise<{ success: number; failed: number; errors: string[] }> {
     const results = {
       success: 0,
       failed: 0,
       errors: [] as string[]
     }
 
-    // Get default clinic site if not provided
-    let clinicSiteId = siteId
-    if (!clinicSiteId) {
-      const { data: sites } = await supabase
-        .from('clinic_sites')
-        .select('id')
-        .eq('is_active', true)
-        .limit(1)
-        .single()
-
-      clinicSiteId = sites?.id || ''
-    }
-
-    if (!clinicSiteId) {
-      throw new Error('No active clinic site found')
-    }
-
     // Process each item
     for (const item of items) {
       try {
-        // 1. Check if medication exists in medications_new table
+        // 1. Check if medication exists in medications table
         const { data: existingMed, error: searchError } = await supabase
-          .from('medications_new')
+          .from('medications')
           .select('id')
           .eq('name', item.name)
           .eq('strength', item.strength)
@@ -446,7 +418,7 @@ export class MedicationService {
         } else {
           // Medication doesn't exist, create new one
           const { data: newMed, error: createError } = await supabase
-            .from('medications_new')
+            .from('medications')
             .insert({
               name: item.name,
               strength: item.strength,
@@ -469,12 +441,11 @@ export class MedicationService {
         const lotNumber = item.lotNumber || `BULK-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`
         const expirationDate = item.expirationDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // +1 year
 
-        // 3. Create inventory record in inventory_new
+        // 3. Create inventory record in inventory
         const { error: inventoryError } = await supabase
-          .from('inventory_new')
+          .from('inventory')
           .insert({
             medication_id: medicationId,
-            site_id: clinicSiteId,
             lot_number: lotNumber,
             expiration_date: expirationDate,
             qty_units: item.quantity,
