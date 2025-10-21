@@ -252,11 +252,11 @@ export class MedicationService {
       quantity: parseInt(record.amount_dispensed?.replace(/\D/g, '') || '1'),
       dose: record.dose_instructions || '',
       lotNumber: record.lot_number || '',
-      expirationDate: record.expiration_date ? new Date(record.expiration_date) : undefined,
+      expirationDate: record.expiration_date ? new Date(record.expiration_date + 'T00:00:00') : undefined,
       dispensedBy: record.entered_by || 'System',
       physicianName: record.physician_name || '',
       studentName: record.student_name || undefined,
-      dispensedAt: new Date(record.log_date),
+      dispensedAt: new Date(record.log_date + 'T00:00:00'),
       indication: record.dose_instructions || '',
       notes: record.notes || undefined
     })) || []
@@ -298,11 +298,11 @@ export class MedicationService {
       quantity: parseInt(data.amount_dispensed?.replace(/\D/g, '') || '1'),
       dose: data.dose_instructions,
       lotNumber: data.lot_number || '',
-      expirationDate: data.expiration_date ? new Date(data.expiration_date) : undefined,
+      expirationDate: data.expiration_date ? new Date(data.expiration_date + 'T00:00:00') : undefined,
       dispensedBy: data.entered_by || 'System',
       physicianName: data.physician_name,
       studentName: data.student_name || undefined,
-      dispensedAt: new Date(data.log_date),
+      dispensedAt: new Date(data.log_date + 'T00:00:00'),
       indication: data.dose_instructions,
       notes: data.notes || undefined
     }
@@ -357,7 +357,7 @@ export class MedicationService {
       dispensedBy: record.dispensedBy,
       physicianName: data.physician_name,
       studentName: data.student_name || undefined,
-      dispensedAt: new Date(data.log_date),
+      dispensedAt: new Date(data.log_date + 'T00:00:00'),
       indication: record.indication,
       notes: data.notes || undefined
     }
