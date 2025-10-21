@@ -236,7 +236,7 @@ export class MedicationService {
     const { data, error } = await supabase
       .from('dispensing_logs')
       .select('*')
-      .order('log_date', { ascending: false })
+      .order('created_at', { ascending: false })
 
     if (error) {
       console.error('Error fetching dispensing records:', error)

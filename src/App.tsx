@@ -144,20 +144,25 @@ export default function App() {
       if (navigator.onLine) {
         // Online: write-through to server then update local/cache
         const newRecord = await MedicationService.createDispensingRecord(record);
-  setDispensingRecords((prev: DispensingRecord[]) => [newRecord, ...prev]);
-  const newStock = Math.max(0, (medications.find((m: Medication) => m.id === record.medicationId)?.currentStock || 0) - record.quantity);
-        await MedicationService.updateMedicationStock(record.medicationId, newStock);
-        await OfflineStore.updateMedicationStock(record.medicationId, newStock);
-  setMedications((prev: Medication[]) => prev.map((med: Medication) => med.id === record.medicationId ? { ...med, currentStock: newStock, isAvailable: newStock > 0, lastUpdated: new Date() } : med));
-  // Update inventory locally (best-effort)
-  setInventory(prev => prev.map(inv => inv.lotNumber === record.lotNumber ? { ...inv, quantity: Math.max(0, inv.quantity - record.quantity) } : inv));
+        setDispensingRecords((prev: DispensingRecord[]) => [newRecord, ...prev]);
+
+        // Update inventory lot quantity in database
+        const inventoryLot = inventory.find(inv => inv.lotNumber === record.lotNumber && inv.medicationId === record.medicationId);
+        if (inventoryLot) {
+          const newQuantity = Math.max(0, inventoryLot.quantity - record.quantity);
+          await MedicationService.updateInventoryItem(inventoryLot.id, { quantity: newQuantity });
+        }
+
+        // Update local state
+        const newStock = Math.max(0, (medications.find((m: Medication) => m.id === record.medicationId)?.currentStock || 0) - record.quantity);
+        setMedications((prev: Medication[]) => prev.map((med: Medication) => med.id === record.medicationId ? { ...med, currentStock: newStock, isAvailable: newStock > 0, lastUpdated: new Date() } : med));
+        setInventory(prev => prev.map(inv => inv.lotNumber === record.lotNumber ? { ...inv, quantity: Math.max(0, inv.quantity - record.quantity) } : inv));
       } else {
         // Offline: queue and update local stock/cache immediately
-  await syncService.queueOfflineDispense(record);
-  setMedications((prev: Medication[]) => prev.map((med: Medication) => med.id === record.medicationId ? { ...med, currentStock: Math.max(0, med.currentStock - record.quantity), isAvailable: med.currentStock - record.quantity > 0, lastUpdated: new Date() } : med));
-  // Update inventory locally (best-effort)
-  setInventory(prev => prev.map(inv => inv.lotNumber === record.lotNumber ? { ...inv, quantity: Math.max(0, inv.quantity - record.quantity) } : inv));
-  setPendingChanges((prev: number) => prev + 1);
+        await syncService.queueOfflineDispense(record);
+        setMedications((prev: Medication[]) => prev.map((med: Medication) => med.id === record.medicationId ? { ...med, currentStock: Math.max(0, med.currentStock - record.quantity), isAvailable: med.currentStock - record.quantity > 0, lastUpdated: new Date() } : med));
+        setInventory(prev => prev.map(inv => inv.lotNumber === record.lotNumber ? { ...inv, quantity: Math.max(0, inv.quantity - record.quantity) } : inv));
+        setPendingChanges((prev: number) => prev + 1);
       }
     } catch (err) {
       console.error('Error dispensing medication:', err);
@@ -223,24 +228,14 @@ export default function App() {
   };
 
   const handleUpdateStock = async (medicationId: string, newQuantity: number, reason: string) => {
+    // NOTE: Stock updates are now handled through inventory lots
+    // Total stock is calculated by summing all inventory lots for a medication
+    // This function is deprecated - use handleUpdateInventoryItem instead
+    console.warn('handleUpdateStock is deprecated - stock is managed through inventory lots');
     try {
-      // Update stock in database
-      await MedicationService.updateMedicationStock(medicationId, newQuantity);
-
-      // Update local state
-  setMedications((prev: Medication[]) => prev.map((med: Medication) => {
-        if (med.id === medicationId) {
-          return {
-            ...med,
-            currentStock: newQuantity,
-            isAvailable: newQuantity > 0,
-            lastUpdated: new Date()
-          };
-        }
-        return med;
-      }));
-
-  setPendingChanges((prev: number) => prev + 1);
+      // Just reload medications to refresh calculated stock
+      const updatedMedications = await MedicationService.getAllMedications();
+      setMedications(updatedMedications);
     } catch (err) {
       console.error('Error updating stock:', err);
       setError('Failed to update stock. Please try again.');
