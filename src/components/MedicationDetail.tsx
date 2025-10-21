@@ -6,7 +6,8 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { ScrollArea } from './ui/scroll-area';
 import { AlertTriangle, CheckCircle, ArrowLeft, Package, Clock, AlertCircle, Plus, Edit2, Trash2 } from 'lucide-react';
 import { Medication, DispensingRecord, InventoryItem, User } from '../types/medication';
 // Temporarily disabled problematic sonner import
@@ -261,8 +262,10 @@ export function MedicationDetail({
                 <DialogContent className="max-w-2xl">
                   <DialogHeader>
                     <DialogTitle>Dispense {medication.name}</DialogTitle>
+                    <DialogDescription>Record medication dispensing for patient</DialogDescription>
                   </DialogHeader>
-                  <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+                  <ScrollArea className="max-h-[70vh] pr-2">
+                    <div className="space-y-4">
                     {/* Patient Information */}
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
@@ -307,16 +310,18 @@ export function MedicationDetail({
 
                       {selectedLots.map((lot, index) => {
                         const inventoryLot = availableLots.find(l => l.lotNumber === lot.lotNumber);
+                        const lotSelectId = `lot-select-${index}`;
+                        const lotQuantityId = `lot-quantity-${index}`;
                         return (
                           <div key={index} className="flex gap-2 items-start p-3 border rounded-md bg-muted/30">
                             <div className="flex-1 space-y-2">
                               <div className="space-y-1">
-                                <Label className="text-xs">Lot Number</Label>
+                                <Label htmlFor={lotSelectId} className="text-xs">Lot Number</Label>
                                 <Select
                                   value={lot.lotNumber}
-                                  onValueChange={(value) => updateLotSelection(index, 'lotNumber', value)}
+                                  onValueChange={(value: string) => updateLotSelection(index, 'lotNumber', value)}
                                 >
-                                  <SelectTrigger className="h-9">
+                                  <SelectTrigger id={lotSelectId} className="h-9">
                                     <SelectValue placeholder="Select lot" />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -330,8 +335,9 @@ export function MedicationDetail({
                               </div>
                               <div className="grid grid-cols-2 gap-2">
                                 <div className="space-y-1">
-                                  <Label className="text-xs">Quantity</Label>
+                                  <Label htmlFor={lotQuantityId} className="text-xs">Quantity</Label>
                                   <Input
+                                    id={lotQuantityId}
                                     type="number"
                                     min="0"
                                     max={inventoryLot?.quantity || 9999}
@@ -435,7 +441,8 @@ export function MedicationDetail({
                     <Button onClick={handleDispense} className="w-full">
                       Confirm Dispensing
                     </Button>
-                  </div>
+                    </div>
+                  </ScrollArea>
                 </DialogContent>
               </Dialog>
             )}
