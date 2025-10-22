@@ -40,6 +40,7 @@ export interface DispensingRecord {
   dispensedAt: Date;
   indication: string;
   notes?: string;
+  clinicSite?: string;            // Free-text clinic site where dispensed
 }
 
 export interface StockUpdate {
