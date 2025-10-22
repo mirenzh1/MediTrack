@@ -78,12 +78,10 @@ export class SyncService {
       dose: rec.dose,
       lotNumber: rec.lotNumber,
       expirationDate: rec.expirationDate,
-      dose: rec.dose,
       dispensedBy: rec.dispensedBy,
       physicianName: rec.physicianName,
       studentName: rec.studentName,
       dispensedAt: rec.dispensedAt,
-      physicianName: rec.physicianName,
       indication: rec.indication,
     })
   }
