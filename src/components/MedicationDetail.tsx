@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -7,7 +7,6 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import { ScrollArea } from './ui/scroll-area';
 import { AlertTriangle, CheckCircle, ArrowLeft, Package, Clock, AlertCircle, Plus, Edit2, Trash2 } from 'lucide-react';
 import { Medication, DispensingRecord, InventoryItem, User } from '../types/medication';
 // Temporarily disabled problematic sonner import
@@ -51,7 +50,6 @@ export function MedicationDetail({
   const [selectedLots, setSelectedLots] = useState<LotSelection[]>([{ lotNumber: '', quantity: 0 }]);
   const [physicianName, setPhysicianName] = useState('');
   const [studentName, setStudentName] = useState('');
-  const [indication, setIndication] = useState('');
   const [notes, setNotes] = useState('');
 
   // Lot editing state
@@ -77,7 +75,7 @@ export function MedicationDetail({
   const handleDispense = () => {
     // Validate required fields
     if (!patientId.trim() || !patientInitials.trim() || !dose.trim() ||
-        !physicianName.trim() || !indication.trim()) {
+        !physicianName.trim()) {
       alert('Please fill in all required fields (marked with *)');
       return;
     }
@@ -115,7 +113,7 @@ export function MedicationDetail({
         physicianName: physicianName.trim(),
         studentName: studentName.trim() || undefined,
         dispensedAt: new Date(),
-        indication: indication.trim(),
+        indication: '', // Not tracked by client
         notes: notes.trim() || undefined
       };
 
@@ -132,7 +130,6 @@ export function MedicationDetail({
     setSelectedLots([{ lotNumber: '', quantity: 0 }]);
     setPhysicianName('');
     setStudentName('');
-    setIndication('');
     setNotes('');
   };
 
@@ -162,9 +159,9 @@ export function MedicationDetail({
     setSelectedLots(updated);
   };
 
-  const getTotalQuantity = () => {
+  const totalQuantity = useMemo(() => {
     return selectedLots.reduce((sum, lot) => sum + (lot.quantity || 0), 0);
-  };
+  }, [selectedLots]);
 
   const handleAddLot = () => {
     setEditingLot(null);
@@ -264,8 +261,8 @@ export function MedicationDetail({
                     <DialogTitle>Dispense {medication.name}</DialogTitle>
                     <DialogDescription>Record medication dispensing for patient</DialogDescription>
                   </DialogHeader>
-                  <ScrollArea className="max-h-[70vh] pr-2">
-                    <div className="space-y-4">
+                  <div className="max-h-[60vh] overflow-y-auto -mx-6 px-6">
+                    <div className="space-y-4 py-2">
                     {/* Patient Information */}
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
@@ -304,7 +301,7 @@ export function MedicationDetail({
                       <div className="flex items-center justify-between">
                         <Label>Lots to Dispense *</Label>
                         <p className="text-sm text-muted-foreground">
-                          Total: {getTotalQuantity()} units
+                          Total: {medication.currentStock} units
                         </p>
                       </div>
 
@@ -404,22 +401,6 @@ export function MedicationDetail({
                       </div>
                     </div>
 
-                    {/* Indication */}
-                    <div className="space-y-2">
-                      <Label htmlFor="indication">Indication *</Label>
-                      <Select value={indication} onValueChange={setIndication}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select indication" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {medication.commonUses.map(use => (
-                            <SelectItem key={use} value={use}>{use}</SelectItem>
-                          ))}
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
                     {/* Notes */}
                     <div className="space-y-2">
                       <Label htmlFor="notes">Notes</Label>
@@ -432,17 +413,11 @@ export function MedicationDetail({
                       />
                     </div>
 
-                    {/* Dispensed By (auto-filled) */}
-                    <div className="p-3 bg-muted rounded-md">
-                      <p className="text-sm font-medium mb-1">Dispensed By</p>
-                      <p className="text-sm text-muted-foreground">{currentUser.name}</p>
-                    </div>
-
                     <Button onClick={handleDispense} className="w-full">
                       Confirm Dispensing
                     </Button>
                     </div>
-                  </ScrollArea>
+                  </div>
                 </DialogContent>
               </Dialog>
             )}
