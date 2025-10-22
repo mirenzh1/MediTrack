@@ -191,6 +191,34 @@ export class MedicationService {
     }
   }
 
+
+
+    // Create a new medication (online only)
+    static async createMedication(input: {
+      name: string
+      strength: string
+      dosageForm?: string
+      isActive?: boolean
+    }): Promise<{ id: string }> {
+      const { data, error } = await supabase
+        .from('medications')
+        .insert({
+          name: input.name,
+          strength: input.strength,
+          dosage_form: input.dosageForm || 'tablet',
+          is_active: input.isActive ?? true,
+        })
+        .select('id')
+        .single()
+  
+      if (error || !data) {
+        console.error('Error creating medication:', error)
+        throw new Error(error?.message || 'Failed to create medication')
+      }
+  
+      return { id: data.id }
+    }
+    
   static async updateInventoryItem(id: string, updates: Partial<Pick<InventoryItem, 'quantity' | 'lotNumber' | 'expirationDate'>>): Promise<InventoryItem> {
     const updateData: any = {}
 
