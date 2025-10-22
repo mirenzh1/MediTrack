@@ -26,6 +26,7 @@ export function EditDispensingRecordDialog({
   const [lotNumber, setLotNumber] = useState('');
   const [physicianName, setPhysicianName] = useState('');
   const [studentName, setStudentName] = useState('');
+  const [clinicSite, setClinicSite] = useState('');
   const [notes, setNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -38,6 +39,7 @@ export function EditDispensingRecordDialog({
       setLotNumber(record.lotNumber || '');
       setPhysicianName(record.physicianName || '');
       setStudentName(record.studentName || '');
+      setClinicSite(record.clinicSite || '');
       setNotes(record.notes || '');
     }
   }, [record]);
@@ -53,6 +55,7 @@ export function EditDispensingRecordDialog({
     if (lotNumber !== record.lotNumber) updates.lotNumber = lotNumber;
     if (physicianName !== record.physicianName) updates.physicianName = physicianName;
     if (studentName !== record.studentName) updates.studentName = studentName || undefined;
+  if (clinicSite !== record.clinicSite) updates.clinicSite = clinicSite || undefined;
     if (notes !== record.notes) updates.notes = notes || undefined;
 
     if (Object.keys(updates).length === 0) {
@@ -157,6 +160,16 @@ export function EditDispensingRecordDialog({
                   placeholder="e.g., Jane Doe"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-clinic-site">Clinic Site</Label>
+              <Input
+                id="edit-clinic-site"
+                value={clinicSite}
+                onChange={(e) => setClinicSite(e.target.value)}
+                placeholder="e.g., Bainbridge, Moultrie, etc."
+              />
             </div>
 
             <div className="space-y-2">

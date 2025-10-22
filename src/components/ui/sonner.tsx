@@ -1,17 +1,27 @@
 "use client";
 
-// Temporarily disabled problematic imports to fix webpack errors
-// import { useTheme } from "next-themes@0.4.6";
-// import { Toaster as Sonner, ToasterProps } from "sonner@2.0.3";
+import { Toaster as Sonner } from "sonner";
 
-interface ToasterProps {
-  position?: string;
-  toastOptions?: any;
-}
+type ToasterProps = React.ComponentProps<typeof Sonner>;
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  // Temporary placeholder - returns null to avoid errors
-  return null;
+  return (
+    <Sonner
+      className="toaster group"
+      toastOptions={{
+        classNames: {
+          toast:
+            "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
+          description: "group-[.toast]:text-muted-foreground",
+          actionButton:
+            "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
+          cancelButton:
+            "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+        },
+      }}
+      {...props}
+    />
+  );
 };
 
 export { Toaster };

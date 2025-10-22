@@ -11,11 +11,13 @@ import { Badge } from './components/ui/badge';
 import { Button } from './components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './components/ui/sheet';
-import { Pill, ClipboardList, Settings, User, Menu, LogOut } from 'lucide-react';
+import { Toaster } from './components/ui/sonner';
+import { Pill, ClipboardList, Settings, User, Menu, LogOut, CheckCircle, XCircle, RotateCcw, AlertTriangle } from 'lucide-react';
 import { Medication, DispensingRecord, InventoryItem, User as UserType } from './types/medication';
 import { MedicationService } from './services/medicationService';
 import { syncService } from './services/syncService';
 import { OfflineStore } from './utils/offlineStore';
+import { showSuccessToast, showErrorToast } from './utils/toastUtils';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -33,6 +35,10 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [editingRecord, setEditingRecord] = useState<DispensingRecord | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  
+  // State for undo functionality
+  const [recentDispensingRecords, setRecentDispensingRecords] = useState<DispensingRecord[]>([]);
+  const [recentInventoryChanges, setRecentInventoryChanges] = useState<{recordId: string, inventoryId: string, previousQuantity: number}[]>([]);
 
   // Load initial data from Supabase (online) or IndexedDB (offline fallback)
   useEffect(() => {
@@ -146,27 +152,129 @@ export default function App() {
         const newRecord = await MedicationService.createDispensingRecord(record);
         setDispensingRecords((prev: DispensingRecord[]) => [newRecord, ...prev]);
 
-        // Update inventory lot quantity in database
+        // Store for undo functionality
         const inventoryLot = inventory.find(inv => inv.lotNumber === record.lotNumber && inv.medicationId === record.medicationId);
+        const previousQuantity = inventoryLot?.quantity || 0;
+        
         if (inventoryLot) {
           const newQuantity = Math.max(0, inventoryLot.quantity - record.quantity);
           await MedicationService.updateInventoryItem(inventoryLot.id, { quantity: newQuantity });
+          
+          // Track changes for undo
+          const inventoryChangeRecord = {
+            recordId: newRecord.id,
+            inventoryId: inventoryLot.id,
+            previousQuantity: previousQuantity
+          };
+          
+          setRecentInventoryChanges(prev => [...prev, inventoryChangeRecord]);
+          
+          // Update local state
+          const newStock = Math.max(0, (medications.find((m: Medication) => m.id === record.medicationId)?.currentStock || 0) - record.quantity);
+          setMedications((prev: Medication[]) => prev.map((med: Medication) => med.id === record.medicationId ? { ...med, currentStock: newStock, isAvailable: newStock > 0, lastUpdated: new Date() } : med));
+          setInventory(prev => prev.map(inv => inv.lotNumber === record.lotNumber ? { ...inv, quantity: Math.max(0, inv.quantity - record.quantity) } : inv));
+          
+          // Add to recent records for undo
+          setRecentDispensingRecords(prev => [newRecord, ...prev].slice(0, 5)); // Keep only last 5 for undo
+
+          // Show success toast with undo option
+          showSuccessToast(
+            `Dispensed ${record.quantity} ${record.medicationName} to ${record.patientInitials}`,
+            `Lot: ${record.lotNumber} • Provider: ${record.dispensedBy}`,
+            {
+              label: "Withdraw",
+              onClick: () => handleUndoDispensing(newRecord.id, newRecord, inventoryChangeRecord)
+            }
+          );
         }
 
-        // Update local state
-        const newStock = Math.max(0, (medications.find((m: Medication) => m.id === record.medicationId)?.currentStock || 0) - record.quantity);
-        setMedications((prev: Medication[]) => prev.map((med: Medication) => med.id === record.medicationId ? { ...med, currentStock: newStock, isAvailable: newStock > 0, lastUpdated: new Date() } : med));
-        setInventory(prev => prev.map(inv => inv.lotNumber === record.lotNumber ? { ...inv, quantity: Math.max(0, inv.quantity - record.quantity) } : inv));
       } else {
         // Offline: queue and update local stock/cache immediately
         await syncService.queueOfflineDispense(record);
         setMedications((prev: Medication[]) => prev.map((med: Medication) => med.id === record.medicationId ? { ...med, currentStock: Math.max(0, med.currentStock - record.quantity), isAvailable: med.currentStock - record.quantity > 0, lastUpdated: new Date() } : med));
         setInventory(prev => prev.map(inv => inv.lotNumber === record.lotNumber ? { ...inv, quantity: Math.max(0, inv.quantity - record.quantity) } : inv));
         setPendingChanges((prev: number) => prev + 1);
+        
+        // Show offline success message
+        showSuccessToast(
+          `Dispensing queued for sync: ${record.quantity} ${record.medicationName}`,
+          `Will sync when online • Patient: ${record.patientInitials}`
+        );
       }
     } catch (err) {
       console.error('Error dispensing medication:', err);
       setError('Failed to record dispensing. Please try again.');
+      showErrorToast(
+        'Failed to dispense medication',
+        'Please try again or contact support if the issue persists.'
+      );
+    }
+  };
+
+  // Undo/Withdraw dispensing function
+  const handleUndoDispensing = async (
+    recordId: string, 
+    recordToUndo?: DispensingRecord, 
+    inventoryChange?: {recordId: string, inventoryId: string, previousQuantity: number}
+  ) => {
+    try {
+      // Use provided record or find it in state
+      const targetRecord = recordToUndo || recentDispensingRecords.find(r => r.id === recordId);
+      const targetInventoryChange = inventoryChange || recentInventoryChanges.find(ic => ic.recordId === recordId);
+      
+      if (!targetRecord) {
+        showErrorToast('Cannot withdraw: Record not found');
+        return;
+      }
+
+      if (navigator.onLine) {
+        // Delete the dispensing record from database
+        await MedicationService.deleteDispensingRecord(recordId);
+        
+        // Restore inventory quantity if we have the change record
+        if (targetInventoryChange) {
+          await MedicationService.updateInventoryItem(targetInventoryChange.inventoryId, { 
+            quantity: targetInventoryChange.previousQuantity 
+          });
+        }
+
+        // Update local state - remove the record
+        setDispensingRecords(prev => prev.filter(r => r.id !== recordId));
+        
+        // Restore medication stock
+        setMedications(prev => prev.map(med => 
+          med.id === targetRecord.medicationId 
+            ? { ...med, currentStock: med.currentStock + targetRecord.quantity, isAvailable: true, lastUpdated: new Date() }
+            : med
+        ));
+        
+        // Restore inventory quantity
+        setInventory(prev => prev.map(inv => 
+          inv.lotNumber === targetRecord.lotNumber 
+            ? { ...inv, quantity: inv.quantity + targetRecord.quantity }
+            : inv
+        ));
+
+        // Clean up tracking arrays
+        setRecentDispensingRecords(prev => prev.filter(r => r.id !== recordId));
+        setRecentInventoryChanges(prev => prev.filter(ic => ic.recordId !== recordId));
+
+        showSuccessToast(
+          'Successfully withdrew dispensing record',
+          `Restored ${targetRecord.quantity} ${targetRecord.medicationName} to inventory`
+        );
+      } else {
+        showErrorToast(
+          'Cannot withdraw while offline',
+          'Please connect to the internet to withdraw dispensing records'
+        );
+      }
+    } catch (err) {
+      console.error('Error undoing dispensing:', err);
+      showErrorToast(
+        'Failed to withdraw dispensing record',
+        'Please try again or contact support'
+      );
     }
   };
 
@@ -179,8 +287,17 @@ export default function App() {
     try {
       const updatedRecord = await MedicationService.updateDispensingRecord(id, updates);
       setDispensingRecords(prev => prev.map(rec => rec.id === id ? updatedRecord : rec));
+      
+      showSuccessToast(
+        'Updated dispensing record',
+        `Changes saved for ${updatedRecord.medicationName} • Patient: ${updatedRecord.patientInitials}`
+      );
     } catch (err) {
       console.error('Error updating dispensing record:', err);
+      showErrorToast(
+        'Failed to update dispensing record',
+        'Please try again or contact support.'
+      );
       throw err; // Re-throw to let dialog handle error display
     }
   };
@@ -193,9 +310,18 @@ export default function App() {
       // Reload medications to update total stock count
       const updatedMedications = await MedicationService.getAllMedications();
       setMedications(updatedMedications);
+      
+      showSuccessToast(
+        'Added new inventory lot',
+        `Lot ${newLot.lotNumber} • ${newLot.quantity} units • Expires ${newLot.expirationDate.toLocaleDateString()}`
+      );
     } catch (err) {
       console.error('Error adding lot:', err);
       setError('Failed to add lot. Please try again.');
+      showErrorToast(
+        'Failed to add inventory lot',
+        'Please check the information and try again.'
+      );
     }
   };
 
@@ -207,23 +333,44 @@ export default function App() {
       // Reload medications to update total stock count
       const updatedMedications = await MedicationService.getAllMedications();
       setMedications(updatedMedications);
+      
+      showSuccessToast(
+        'Updated inventory lot',
+        `Lot ${updatedLot.lotNumber} • New quantity: ${updatedLot.quantity} units`
+      );
     } catch (err) {
       console.error('Error updating lot:', err);
       setError('Failed to update lot. Please try again.');
+      showErrorToast(
+        'Failed to update inventory lot',
+        'Please try again or contact support.'
+      );
     }
   };
 
   const handleDeleteLot = async (id: string) => {
     try {
+      // Get lot info before deletion for toast message
+      const lotToDelete = inventory.find(lot => lot.id === id);
+      
       await MedicationService.deleteInventoryItem(id);
       setInventory(prev => prev.filter(lot => lot.id !== id));
 
       // Reload medications to update total stock count
       const updatedMedications = await MedicationService.getAllMedications();
       setMedications(updatedMedications);
+      
+      showSuccessToast(
+        'Deleted inventory lot',
+        lotToDelete ? `Lot ${lotToDelete.lotNumber} • ${lotToDelete.quantity} units removed` : 'Inventory lot removed successfully'
+      );
     } catch (err) {
       console.error('Error deleting lot:', err);
       setError('Failed to delete lot. Please try again.');
+      showErrorToast(
+        'Failed to delete inventory lot',
+        'Please try again or contact support.'
+      );
     }
   };
 
@@ -476,7 +623,8 @@ export default function App() {
         onSave={handleSaveEditedRecord}
       />
 
-      {/* Toaster temporarily disabled to fix import conflicts */}
+      {/* Toast Notifications */}
+      <Toaster position="top-right" />
     </div>
   );
 }

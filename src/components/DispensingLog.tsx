@@ -39,7 +39,8 @@ export function DispensingLog({ records, onEditRecord }: DispensingLogProps) {
         const initials = (record.patientInitials || '').toLowerCase()
         const by = (record.dispensedBy || '').toLowerCase()
         const ind = (record.indication || '').toLowerCase()
-        return med.includes(q) || initials.includes(q) || by.includes(q) || ind.includes(q)
+        const site = (record.clinicSite || '').toLowerCase()
+        return med.includes(q) || initials.includes(q) || by.includes(q) || ind.includes(q) || site.includes(q)
       });
     }
 
@@ -93,6 +94,7 @@ export function DispensingLog({ records, onEditRecord }: DispensingLogProps) {
       'Physician Name',
       'Student Name',
       'Dispensed By',
+      'Clinic Site',
       'Indication',
       'Notes'
     ];
@@ -108,6 +110,7 @@ export function DispensingLog({ records, onEditRecord }: DispensingLogProps) {
       record.physicianName,
       record.studentName || '',
       record.dispensedBy,
+      record.clinicSite || '',
       record.indication,
       record.notes || ''
     ]);
@@ -139,6 +142,7 @@ export function DispensingLog({ records, onEditRecord }: DispensingLogProps) {
       'Physician Name': record.physicianName,
       'Student Name': record.studentName || '',
       'Dispensed By': record.dispensedBy,
+      'Clinic Site': record.clinicSite || '',
       'Indication': record.indication,
       'Notes': record.notes || ''
     }));
@@ -276,6 +280,7 @@ export function DispensingLog({ records, onEditRecord }: DispensingLogProps) {
                   <TableHead>Qty</TableHead>
                   <TableHead>Physician</TableHead>
                   <TableHead>Student</TableHead>
+                  <TableHead>Clinic Site</TableHead>
                   <TableHead>Notes</TableHead>
                   {onEditRecord && <TableHead className="w-[80px]">Actions</TableHead>}
                 </TableRow>
@@ -313,6 +318,9 @@ export function DispensingLog({ records, onEditRecord }: DispensingLogProps) {
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {record.studentName || '-'}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {record.clinicSite || '-'}
                     </TableCell>
                     <TableCell className="max-w-[150px]">
                       {record.notes && (
