@@ -83,7 +83,6 @@ export class SyncService {
       studentName: rec.studentName,
       dispensedAt: rec.dispensedAt,
       indication: rec.indication,
-      clinicSite: rec.clinicSite,
     })
   }
 
@@ -123,7 +122,6 @@ export class SyncService {
       physician_name: p.physicianName,
       student_name: 'Offline Sync',
       entered_by: null,
-      clinic_site: p.clinicSite || null,
     })
     if (insertError) throw insertError
 

@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { AlertTriangle, CheckCircle, ArrowLeft, Package, Clock, AlertCircle, Plus, Edit2, Trash2 } from 'lucide-react';
 import { Medication, DispensingRecord, InventoryItem, User } from '../types/medication';
-import { showErrorToast } from '../utils/toastUtils';
+// Temporarily disabled problematic sonner import
+// import { toast } from 'sonner@2.0.3';
 
 interface MedicationDetailProps {
   medication: Medication;
@@ -49,7 +50,6 @@ export function MedicationDetail({
   const [selectedLots, setSelectedLots] = useState<LotSelection[]>([{ lotNumber: '', quantity: 0 }]);
   const [physicianName, setPhysicianName] = useState('');
   const [studentName, setStudentName] = useState('');
-  const [clinicSite, setClinicSite] = useState('');
   const [notes, setNotes] = useState('');
 
   // Lot editing state
@@ -76,20 +76,14 @@ export function MedicationDetail({
     // Validate required fields
     if (!patientId.trim() || !patientInitials.trim() || !dose.trim() ||
         !physicianName.trim()) {
-      showErrorToast(
-        'Missing required fields',
-        'Please fill in all required fields (marked with *)'
-      );
+      alert('Please fill in all required fields (marked with *)');
       return;
     }
 
     // Validate lots
     const validLots = selectedLots.filter(lot => lot.lotNumber && lot.quantity > 0);
     if (validLots.length === 0) {
-      showErrorToast(
-        'No lots selected',
-        'Please select at least one lot with quantity > 0'
-      );
+      alert('Please select at least one lot with quantity > 0');
       return;
     }
 
@@ -97,10 +91,7 @@ export function MedicationDetail({
     for (const selectedLot of validLots) {
       const inventoryLot = availableLots.find(lot => lot.lotNumber === selectedLot.lotNumber);
       if (inventoryLot && selectedLot.quantity > inventoryLot.quantity) {
-        showErrorToast(
-          'Insufficient inventory',
-          `Lot ${selectedLot.lotNumber} only has ${inventoryLot.quantity} units available (you entered ${selectedLot.quantity})`
-        );
+        alert(`Lot ${selectedLot.lotNumber} only has ${inventoryLot.quantity} units available (you entered ${selectedLot.quantity})`);
         return;
       }
     }
@@ -123,8 +114,7 @@ export function MedicationDetail({
         studentName: studentName.trim() || undefined,
         dispensedAt: new Date(),
         indication: '', // Not tracked by client
-        notes: notes.trim() || undefined,
-        clinicSite: clinicSite.trim() || undefined,
+        notes: notes.trim() || undefined
       };
 
       onDispense(record);
@@ -140,7 +130,6 @@ export function MedicationDetail({
     setSelectedLots([{ lotNumber: '', quantity: 0 }]);
     setPhysicianName('');
     setStudentName('');
-    setClinicSite('');
     setNotes('');
   };
 
@@ -192,19 +181,13 @@ export function MedicationDetail({
 
   const handleSaveLot = () => {
     if (!lotNumber.trim() || !lotQuantity || !lotExpiration) {
-      showErrorToast(
-        'Missing lot information',
-        'Please fill in all lot fields'
-      );
+      alert('Please fill in all lot fields');
       return;
     }
 
     const qty = parseInt(lotQuantity);
     if (qty < 0) {
-      showErrorToast(
-        'Invalid quantity',
-        'Quantity must be positive'
-      );
+      alert('Quantity must be positive');
       return;
     }
 
@@ -416,17 +399,6 @@ export function MedicationDetail({
                           onChange={(e) => setStudentName(e.target.value)}
                         />
                       </div>
-                    </div>
-
-                    {/* Clinic Site */}
-                    <div className="space-y-2">
-                      <Label htmlFor="clinic-site">Clinic Site</Label>
-                      <Input
-                        id="clinic-site"
-                        placeholder="e.g., Bainbridge, Moultrie, etc."
-                        value={clinicSite}
-                        onChange={(e) => setClinicSite(e.target.value)}
-                      />
                     </div>
 
                     {/* Notes */}

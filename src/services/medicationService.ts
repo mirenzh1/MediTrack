@@ -270,8 +270,7 @@ export class MedicationService {
       // Anchor at UTC noon to ensure EST display matches calendar date; fallback to created_at if needed
       dispensedAt,
       indication: record.dose_instructions || '',
-      notes: record.notes || undefined,
-      clinicSite: record.clinic_site || undefined
+      notes: record.notes || undefined
     })}) || []
   }
 
@@ -287,7 +286,6 @@ export class MedicationService {
     if (updates.studentName !== undefined) updateData.student_name = updates.studentName
     if (updates.indication !== undefined) updateData.dose_instructions = updates.indication
     if (updates.notes !== undefined) updateData.notes = updates.notes
-  if (updates.clinicSite !== undefined) updateData.clinic_site = updates.clinicSite
 
   // Supabase stores UTC; keep updated_at in UTC
   updateData.updated_at = new Date().toISOString()
@@ -326,8 +324,7 @@ export class MedicationService {
       // Anchor at UTC noon; fallback if log_date missing
       dispensedAt: data.log_date ? logDateToUTCNoon(data.log_date) : (data.created_at ? new Date(data.created_at) : new Date()),
       indication: data.dose_instructions,
-      notes: data.notes || undefined,
-      clinicSite: data.clinic_site || undefined
+      notes: data.notes || undefined
     }
   }
 
@@ -358,8 +355,7 @@ export class MedicationService {
         physician_name: record.physicianName,
         student_name: record.studentName || null,
         entered_by: enteredBy,
-        notes: record.notes || null,
-        clinic_site: record.clinicSite || null
+        notes: record.notes || null
       })
       .select()
       .single()
@@ -385,20 +381,7 @@ export class MedicationService {
       // Anchor at UTC noon; fallback if log_date missing
       dispensedAt: data.log_date ? logDateToUTCNoon(data.log_date) : (data.created_at ? new Date(data.created_at) : record.dispensedAt),
       indication: record.indication,
-      notes: data.notes || undefined,
-      clinicSite: data.clinic_site || record.clinicSite
-    }
-  }
-
-  static async deleteDispensingRecord(id: string): Promise<void> {
-    const { error } = await supabase
-      .from('dispensing_logs')
-      .delete()
-      .eq('id', id)
-
-    if (error) {
-      console.error('Error deleting dispensing record:', error)
-      throw new Error('Failed to delete dispensing record')
+      notes: data.notes || undefined
     }
   }
 

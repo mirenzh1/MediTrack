@@ -44,7 +44,6 @@
             "react-hook-form": "*",
             "react-resizable-panels": "^2.1.7",
             "recharts": "*",
-            "sonner": "^2.0.7",
             "tailwind-merge": "*",
             "vaul": "*",
             "xlsx": "^0.18.5"
