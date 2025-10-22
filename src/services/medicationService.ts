@@ -430,7 +430,7 @@ export class MedicationService {
     lotNumber?: string
     expirationDate?: string
     dosageForm?: string
-  }>): Promise<{ success: number; failed: number; errors: string[] }> {
+  }>, p0: string, id: string): Promise<{ success: number; failed: number; errors: string[] }> {
     const results = {
       success: 0,
       failed: 0,

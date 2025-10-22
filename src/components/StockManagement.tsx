@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { AlertTriangle, CheckCircle, Edit, Package, Plus, Search, TrendingDown, TrendingUp, Upload } from 'lucide-react';
-import { Medication, User, StockUpdate } from '../types/medication';
+import { Medication, User, StockUpdate, InventoryItem } from '../types/medication';
 import { BulkImportDialog, ImportedMedicationRow } from './BulkImportDialog';
 import { MedicationService } from '../services/medicationService';
 // Temporarily disabled problematic sonner import
