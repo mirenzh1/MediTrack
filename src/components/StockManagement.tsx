@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { AlertTriangle, CheckCircle, Edit, Package, Plus, Search, TrendingDown, TrendingUp, Upload } from 'lucide-react';
 import { Medication, User, StockUpdate, InventoryItem } from '../types/medication';
 import { BulkImportDialog, ImportedMedicationRow } from './BulkImportDialog';
+import { AddLotDialog } from './AddLotDialog';
 import { MedicationService } from '../services/medicationService';
 // Temporarily disabled problematic sonner import
 // import { toast } from 'sonner@2.0.3';
@@ -18,9 +19,10 @@ interface StockManagementProps {
   medications: Medication[];
   currentUser: User;
   onUpdateStock: (medicationId: string, newQuantity: number, reason: string) => void;
+  onAddLot: (lot: Omit<InventoryItem, 'id' | 'isExpired'>) => Promise<void>;
 }
 
-export function StockManagement({ medications, currentUser, onUpdateStock }: StockManagementProps) {
+export function StockManagement({ medications, currentUser, onUpdateStock, onAddLot }: StockManagementProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedMedication, setSelectedMedication] = useState<Medication | null>(null);
@@ -28,6 +30,8 @@ export function StockManagement({ medications, currentUser, onUpdateStock }: Sto
   const [updateReason, setUpdateReason] = useState('');
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isAddLotDialogOpen, setIsAddLotDialogOpen] = useState(false);
+  const [selectedMedicationForLot, setSelectedMedicationForLot] = useState<Medication | null>(null);
 
   const statusOptions = [
     { value: 'all', label: 'All Items' },
@@ -162,6 +166,17 @@ export function StockManagement({ medications, currentUser, onUpdateStock }: Sto
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Stock Management</h1>
         <div className="flex items-center gap-3">
+          <Button
+            variant="default"
+            onClick={() => {
+              setSelectedMedicationForLot(null);
+              setIsAddLotDialogOpen(true);
+            }}
+            className="gap-2"
+          >
+            <Plus className="size-4" />
+            Add New Lot
+          </Button>
           <Button
             variant="default"
             onClick={() => setIsImportDialogOpen(true)}
@@ -404,6 +419,15 @@ export function StockManagement({ medications, currentUser, onUpdateStock }: Sto
         open={isImportDialogOpen}
         onOpenChange={setIsImportDialogOpen}
         onImport={handleBulkImport}
+      />
+
+      {/* Add Lot Dialog */}
+      <AddLotDialog
+        open={isAddLotDialogOpen}
+        onOpenChange={setIsAddLotDialogOpen}
+        medication={selectedMedicationForLot}
+        medications={medications}
+        onAddLot={onAddLot}
       />
     </div>
   );
