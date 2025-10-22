@@ -8,6 +8,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Search, Download, Calendar, Package, User, ChevronDown, Edit } from 'lucide-react';
 import { DispensingRecord } from '../types/medication';
+import { formatDateEST } from '../utils/timezone';
+import { toESTDateString, logDateToUTCNoon } from '../utils/timezone';
 import * as XLSX from 'xlsx';
 
 interface DispensingLogProps {
@@ -31,40 +33,48 @@ export function DispensingLog({ records, onEditRecord }: DispensingLogProps) {
 
     // Filter by search term
     if (searchTerm) {
-      filtered = filtered.filter(record =>
-        record.medicationName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        record.patientInitials.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        record.dispensedBy.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        record.indication.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      const q = searchTerm.toLowerCase()
+      filtered = filtered.filter(record => {
+        const med = (record.medicationName || '').toLowerCase()
+        const initials = (record.patientInitials || '').toLowerCase()
+        const by = (record.dispensedBy || '').toLowerCase()
+        const ind = (record.indication || '').toLowerCase()
+        return med.includes(q) || initials.includes(q) || by.includes(q) || ind.includes(q)
+      });
     }
 
     // Filter by date
     if (dateFilter !== 'all') {
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      
+      // Compute boundaries in EST
+      const estTodayStr = toESTDateString(new Date());
+      const estToday = logDateToUTCNoon(estTodayStr);
+
       filtered = filtered.filter(record => {
-        const recordDate = new Date(record.dispensedAt);
-        
+        const recordDate = record.dispensedAt; // already anchored for EST display
+
         switch (dateFilter) {
           case 'today':
-            return recordDate >= today;
-          case 'week':
-            const weekAgo = new Date(today);
-            weekAgo.setDate(today.getDate() - 7);
+            return recordDate >= estToday;
+          case 'week': {
+            const weekAgo = new Date(estToday.getTime() - 7 * 24 * 60 * 60 * 1000);
             return recordDate >= weekAgo;
-          case 'month':
-            const monthAgo = new Date(today);
-            monthAgo.setMonth(today.getMonth() - 1);
+          }
+          case 'month': {
+            const monthAgo = new Date(estToday);
+            monthAgo.setUTCDate(monthAgo.getUTCDate() - 30);
             return recordDate >= monthAgo;
+          }
           default:
             return true;
         }
       });
     }
 
-    return filtered.sort((a, b) => new Date(b.dispensedAt).getTime() - new Date(a.dispensedAt).getTime());
+    return filtered.sort((a, b) => {
+      const ta = a.dispensedAt instanceof Date ? a.dispensedAt.getTime() : new Date(a.dispensedAt as any).getTime()
+      const tb = b.dispensedAt instanceof Date ? b.dispensedAt.getTime() : new Date(b.dispensedAt as any).getTime()
+      return tb - ta
+    });
   }, [records, searchTerm, dateFilter]);
 
   const totalDispensed = filteredRecords.reduce((sum, record) => sum + record.quantity, 0);
@@ -88,12 +98,12 @@ export function DispensingLog({ records, onEditRecord }: DispensingLogProps) {
     ];
 
     const csvData = filteredRecords.map(record => [
-      record.dispensedAt.toLocaleDateString(),
+      formatDateEST(record.dispensedAt),
       record.patientId,
       record.medicationName,
       record.dose,
       record.lotNumber,
-      record.expirationDate?.toLocaleDateString() || '',
+      record.expirationDate ? formatDateEST(record.expirationDate) : '',
       record.quantity.toString(),
       record.physicianName,
       record.studentName || '',
@@ -119,12 +129,12 @@ export function DispensingLog({ records, onEditRecord }: DispensingLogProps) {
 
   const exportToExcel = () => {
     const excelData = filteredRecords.map(record => ({
-      'Date': record.dispensedAt.toLocaleDateString(),
+      'Date': formatDateEST(record.dispensedAt),
       'Patient ID': record.patientId,
       'Medication': record.medicationName,
       'Dose': record.dose,
       'Lot Number': record.lotNumber,
-      'Expiration': record.expirationDate?.toLocaleDateString() || '',
+      'Expiration': record.expirationDate ? formatDateEST(record.expirationDate) : '',
       'Amount Dispensed': record.quantity,
       'Physician Name': record.physicianName,
       'Student Name': record.studentName || '',
@@ -274,7 +284,7 @@ export function DispensingLog({ records, onEditRecord }: DispensingLogProps) {
                 {filteredRecords.map(record => (
                   <TableRow key={record.id}>
                     <TableCell className="text-sm">
-                      {record.dispensedAt.toLocaleDateString()}
+                      {formatDateEST(record.dispensedAt)}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="text-xs font-mono">
@@ -293,7 +303,7 @@ export function DispensingLog({ records, onEditRecord }: DispensingLogProps) {
                       <span className="text-sm font-mono">{record.lotNumber}</span>
                     </TableCell>
                     <TableCell className="text-sm">
-                      {record.expirationDate?.toLocaleDateString() || '-'}
+                      {record.expirationDate ? formatDateEST(record.expirationDate) : '-'}
                     </TableCell>
                     <TableCell>
                       <span className="font-medium">{record.quantity}</span>

@@ -1,7 +1,10 @@
 import { supabase } from '../lib/supabase'
 import type { Medication, DispensingRecord } from '../types/medication'
 import { OfflineStore, type PendingDispense } from '../utils/offlineStore'
+
+import { toESTDateString } from '../utils/timezone'
 import { MedicationService } from './medicationService'
+
 
 type MedRow = {
   id: string
@@ -75,10 +78,12 @@ export class SyncService {
       dose: rec.dose,
       lotNumber: rec.lotNumber,
       expirationDate: rec.expirationDate,
+      dose: rec.dose,
       dispensedBy: rec.dispensedBy,
       physicianName: rec.physicianName,
       studentName: rec.studentName,
       dispensedAt: rec.dispensedAt,
+      physicianName: rec.physicianName,
       indication: rec.indication,
     })
   }
@@ -107,7 +112,8 @@ export class SyncService {
   private async createDispenseRemote(p: PendingDispense): Promise<void> {
     // 1) Insert into dispensing_logs (include medication_id when available)
     const { error: insertError } = await supabase.from('dispensing_logs').insert({
-      log_date: p.dispensedAt.toISOString().split('T')[0],
+      // Store the EST calendar date for log_date
+      log_date: toESTDateString(p.dispensedAt),
       patient_id: `offline-${p.dispensedAt.getTime()}`,
       medication_id: p.medicationId,
       medication_name: p.medicationName,

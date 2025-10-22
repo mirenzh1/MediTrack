@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase'
 import { Medication, InventoryItem, DispensingRecord, User } from '../types/medication'
+import { toESTDateString, logDateToUTCNoon } from '../utils/timezone'
 
 export class MedicationService {
 
@@ -243,23 +244,34 @@ export class MedicationService {
       throw new Error('Failed to fetch dispensing records')
     }
 
-    return data?.map(record => ({
+    return data?.map(record => {
+      const dispensedAt = record.log_date
+        ? logDateToUTCNoon(record.log_date)
+        : (record.created_at ? new Date(record.created_at) : new Date())
+      return ({
       id: record.id,
       medicationId: record.medication_id || record.medication_name || '',
       medicationName: record.medication_name,
       patientId: record.patient_id || '',
       patientInitials: record.patient_id?.split('-')[0] + '.' + (record.patient_id?.split('-')[1]?.slice(0,1) || '') + '.',
-      quantity: parseInt(record.amount_dispensed?.replace(/\D/g, '') || '1'),
+      quantity: (() => {
+        const raw = record.amount_dispensed
+        const s = raw === null || raw === undefined ? '' : String(raw)
+        const digits = s.replace(/\D/g, '')
+        const n = parseInt(digits, 10)
+        return Number.isFinite(n) && n > 0 ? n : 1
+      })(),
       dose: record.dose_instructions || '',
       lotNumber: record.lot_number || '',
-      expirationDate: record.expiration_date ? new Date(record.expiration_date + 'T00:00:00') : undefined,
+  expirationDate: record.expiration_date ? new Date(record.expiration_date + 'T00:00:00') : undefined,
       dispensedBy: record.entered_by || 'System',
       physicianName: record.physician_name || '',
       studentName: record.student_name || undefined,
-      dispensedAt: new Date(record.log_date + 'T00:00:00'),
+      // Anchor at UTC noon to ensure EST display matches calendar date; fallback to created_at if needed
+      dispensedAt,
       indication: record.dose_instructions || '',
       notes: record.notes || undefined
-    })) || []
+    })}) || []
   }
 
   static async updateDispensingRecord(id: string, updates: Partial<Omit<DispensingRecord, 'id'>>): Promise<DispensingRecord> {
@@ -269,13 +281,14 @@ export class MedicationService {
     if (updates.dose !== undefined) updateData.dose_instructions = updates.dose
     if (updates.quantity !== undefined) updateData.amount_dispensed = `${updates.quantity} tabs`
     if (updates.lotNumber !== undefined) updateData.lot_number = updates.lotNumber
-    if (updates.expirationDate !== undefined) updateData.expiration_date = updates.expirationDate.toISOString().split('T')[0]
+  if (updates.expirationDate !== undefined) updateData.expiration_date = updates.expirationDate.toISOString().split('T')[0]
     if (updates.physicianName !== undefined) updateData.physician_name = updates.physicianName
     if (updates.studentName !== undefined) updateData.student_name = updates.studentName
     if (updates.indication !== undefined) updateData.dose_instructions = updates.indication
     if (updates.notes !== undefined) updateData.notes = updates.notes
 
-    updateData.updated_at = new Date().toISOString()
+  // Supabase stores UTC; keep updated_at in UTC
+  updateData.updated_at = new Date().toISOString()
 
     const { data, error } = await supabase
       .from('dispensing_logs')
@@ -295,14 +308,21 @@ export class MedicationService {
       medicationName: data.medication_name,
       patientId: data.patient_id,
       patientInitials: data.patient_id?.split('-')[0] + '.' + (data.patient_id?.split('-')[1]?.slice(0,1) || '') + '.',
-      quantity: parseInt(data.amount_dispensed?.replace(/\D/g, '') || '1'),
+      quantity: (() => {
+        const raw = data.amount_dispensed
+        const s = raw === null || raw === undefined ? '' : String(raw)
+        const digits = s.replace(/\D/g, '')
+        const n = parseInt(digits, 10)
+        return Number.isFinite(n) && n > 0 ? n : 1
+      })(),
       dose: data.dose_instructions,
       lotNumber: data.lot_number || '',
-      expirationDate: data.expiration_date ? new Date(data.expiration_date + 'T00:00:00') : undefined,
+  expirationDate: data.expiration_date ? new Date(data.expiration_date + 'T00:00:00') : undefined,
       dispensedBy: data.entered_by || 'System',
       physicianName: data.physician_name,
       studentName: data.student_name || undefined,
-      dispensedAt: new Date(data.log_date + 'T00:00:00'),
+      // Anchor at UTC noon; fallback if log_date missing
+      dispensedAt: data.log_date ? logDateToUTCNoon(data.log_date) : (data.created_at ? new Date(data.created_at) : new Date()),
       indication: data.dose_instructions,
       notes: data.notes || undefined
     }
@@ -323,7 +343,8 @@ export class MedicationService {
     const { data, error } = await supabase
       .from('dispensing_logs')
       .insert({
-        log_date: record.dispensedAt.toISOString().split('T')[0],
+        // Store the EST calendar date for log_date
+        log_date: toESTDateString(record.dispensedAt),
         patient_id: record.patientId,
         medication_id: record.medicationId,
         medication_name: record.medicationName,
@@ -357,7 +378,8 @@ export class MedicationService {
       dispensedBy: record.dispensedBy,
       physicianName: data.physician_name,
       studentName: data.student_name || undefined,
-      dispensedAt: new Date(data.log_date + 'T00:00:00'),
+      // Anchor at UTC noon; fallback if log_date missing
+      dispensedAt: data.log_date ? logDateToUTCNoon(data.log_date) : (data.created_at ? new Date(data.created_at) : record.dispensedAt),
       indication: record.indication,
       notes: data.notes || undefined
     }

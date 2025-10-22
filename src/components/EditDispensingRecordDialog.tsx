@@ -5,6 +5,7 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { DispensingRecord } from '../types/medication';
+import { formatDateEST } from '../utils/timezone';
 
 interface EditDispensingRecordDialogProps {
   record: DispensingRecord | null;
@@ -89,7 +90,7 @@ export function EditDispensingRecordDialog({
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Date (cannot be changed)</Label>
-              <p className="text-sm">{record.dispensedAt.toLocaleDateString()}</p>
+              <p className="text-sm">{formatDateEST(record.dispensedAt)}</p>
             </div>
           </div>
 
